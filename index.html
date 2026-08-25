@@ -277,6 +277,7 @@
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* ============================================================
    PRÉFACE — modifiez ce texte directement ici, puis rechargez.
@@ -285,6 +286,13 @@ const PREFACE_TEXT_FR = "";
 const PREFACE_TEXT_EN = "";
 
 const ADMIN_PIN = "0000";
+
+/* ============================================================
+   Connexion Supabase — base de données publique et partagée
+============================================================ */
+const SUPABASE_URL = "https://wxogyuuqkwtnlbuldlky.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4b2d5dXVxa3d0bmxidWxkbGt5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NTI0MTQsImV4cCI6MjEwMzIyODQxNH0.kSfQ4B_E9khNFiY37ycE7Lkvv5G791WkgXDgCEqdEs4";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let isAdmin = false;
 let approvedEntries = [];
@@ -422,14 +430,13 @@ function renderPreface(){
 
 /* ---------- Dictionnaire public ---------- */
 async function loadApproved(){
-  const listRes = await window.storage.list('word:', true);
-  const keys = listRes ? listRes.keys : [];
-  const entries = [];
-  for(const k of keys){
-    try{ const r = await window.storage.get(k, true); if(r && r.value) entries.push(JSON.parse(r.value)); }catch(e){}
-  }
-  entries.sort((a,b) => a.word.localeCompare(b.word, 'fr'));
-  approvedEntries = entries;
+  const { data, error } = await sb
+    .from('words')
+    .select('*')
+    .eq('status', 'approved')
+    .order('word', { ascending: true });
+  if(error){ console.error(error); approvedEntries = []; renderEntries(); return; }
+  approvedEntries = data || [];
   renderEntries();
 }
 
@@ -482,11 +489,11 @@ document.getElementById('addBtn').addEventListener('click', async () => {
   if(!word || !def){
     msg.style.color = 'var(--danger)'; msg.textContent = t('errWordDef'); return;
   }
-  const entry = { word, definition: def, lang, example, origin, submittedAt: new Date().toISOString() };
-  const key = 'pending:' + word.toLowerCase().replace(/\s+/g,'-') + ':' + Date.now();
   try{
-    const result = await window.storage.set(key, JSON.stringify(entry), true);
-    if(!result) throw new Error('échec');
+    const { error } = await sb.from('words').insert({
+      word, definition: def, lang, example, origin, status: 'pending'
+    });
+    if(error) throw error;
     msg.style.color = 'var(--source)';
     msg.textContent = `« ${word} » ${t('okSubmit')}`;
     document.getElementById('wordInput').value = '';
@@ -522,17 +529,17 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
 /* ---------- Admin : propositions en attente ---------- */
 async function renderPending(){
   const container = document.getElementById('pendingList');
-  const listRes = await window.storage.list('pending:', true);
-  const keys = listRes ? listRes.keys : [];
-  if(keys.length === 0){
+  const { data, error } = await sb
+    .from('words')
+    .select('*')
+    .eq('status', 'pending')
+    .order('submitted_at', { ascending: true });
+  if(error){ console.error(error); container.innerHTML = '<p class="hint">' + t('pendingEmpty') + '</p>'; return; }
+  const items = data || [];
+  if(items.length === 0){
     container.innerHTML = '<p class="hint">' + t('pendingEmpty') + '</p>';
     return;
   }
-  const items = [];
-  for(const k of keys){
-    try{ const r = await window.storage.get(k, true); if(r && r.value) items.push({key:k, ...JSON.parse(r.value)}); }catch(e){}
-  }
-  items.sort((a,b) => (a.submittedAt||'').localeCompare(b.submittedAt||''));
 
   container.innerHTML = items.map(it => `
     <div class="pending-item">
@@ -542,8 +549,8 @@ async function renderPending(){
       ${it.origin ? `<div class="meta-line"><strong>${t('originLabel')}</strong>${escapeHtml(it.origin)}</div>` : ''}
       ${it.lang ? `<div class="meta-line"><strong>${t('labelLang')}</strong>${escapeHtml(it.lang)}</div>` : ''}
       <div class="pending-actions">
-        <button class="btn approve-btn" data-key="${escapeAttr(it.key)}">${t('approveBtn')}</button>
-        <button class="btn danger reject-btn" data-key="${escapeAttr(it.key)}">${t('rejectBtn')}</button>
+        <button class="btn approve-btn" data-key="${escapeAttr(it.id)}">${t('approveBtn')}</button>
+        <button class="btn danger reject-btn" data-key="${escapeAttr(it.id)}">${t('rejectBtn')}</button>
       </div>
     </div>
   `).join('');
@@ -552,18 +559,13 @@ async function renderPending(){
   container.querySelectorAll('.reject-btn').forEach(btn => btn.addEventListener('click', () => rejectPending(btn.dataset.key)));
 }
 
-async function approvePending(key){
-  const r = await window.storage.get(key, true);
-  if(!r || !r.value) return;
-  const entry = JSON.parse(r.value);
-  const newKey = 'word:' + entry.word.toLowerCase().replace(/\s+/g,'-') + ':' + Date.now();
-  await window.storage.set(newKey, JSON.stringify(entry), true);
-  await window.storage.delete(key, true);
+async function approvePending(id){
+  await sb.from('words').update({ status: 'approved', approved_at: new Date().toISOString() }).eq('id', id);
   await renderPending();
   await loadApproved();
 }
-async function rejectPending(key){
-  await window.storage.delete(key, true);
+async function rejectPending(id){
+  await sb.from('words').delete().eq('id', id);
   await renderPending();
 }
 
@@ -573,9 +575,9 @@ document.getElementById('addRefBtn').addEventListener('click', async () => {
   const note = document.getElementById('refNoteInput').value.trim();
   const msg = document.getElementById('refMsg');
   if(!word || !note){ msg.style.color = 'var(--danger)'; msg.textContent = t('errWordNote'); return; }
-  const key = 'ref:' + word.toLowerCase().replace(/\s+/g,'-') + ':' + Date.now();
   try{
-    await window.storage.set(key, JSON.stringify({word, note, addedAt: new Date().toISOString()}), true);
+    const { error } = await sb.from('reference_notes').insert({ word, note });
+    if(error) throw error;
     msg.style.color = 'var(--source)'; msg.textContent = t('okRefPublish');
     document.getElementById('refWordInput').value = '';
     document.getElementById('refNoteInput').value = '';
@@ -588,17 +590,16 @@ document.getElementById('addRefBtn').addEventListener('click', async () => {
 /* ---------- Page Référence ---------- */
 async function loadReference(){
   const container = document.getElementById('refEntries');
-  const listRes = await window.storage.list('ref:', true);
-  const keys = listRes ? listRes.keys : [];
-  if(keys.length === 0){
+  const { data, error } = await sb
+    .from('reference_notes')
+    .select('*')
+    .order('word', { ascending: true });
+  if(error){ console.error(error); container.innerHTML = '<div class="empty">' + t('refEmpty') + '</div>'; return; }
+  const items = data || [];
+  if(items.length === 0){
     container.innerHTML = '<div class="empty">' + t('refEmpty') + '</div>';
     return;
   }
-  const items = [];
-  for(const k of keys){
-    try{ const r = await window.storage.get(k, true); if(r && r.value) items.push(JSON.parse(r.value)); }catch(e){}
-  }
-  items.sort((a,b) => a.word.localeCompare(b.word, 'fr'));
   container.innerHTML = items.map(it => `
     <div class="ref-entry">
       <div class="ref-word">${escapeHtml(it.word)}</div>

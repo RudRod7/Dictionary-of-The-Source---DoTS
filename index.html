@@ -232,7 +232,8 @@
   <section class="page" id="page-admin">
     <div id="adminGate" class="admin-gate">
       <p class="hint" data-i18n="adminAccess">Accès administrateur</p>
-      <input type="password" id="pinInput" data-i18n-placeholder="pinPh" placeholder="Code d'accès" style="text-align:center;margin-bottom:12px;">
+      <input type="text" id="emailInput" data-i18n-placeholder="emailPh" placeholder="Email" style="text-align:center;margin-bottom:10px;">
+      <input type="password" id="pinInput" data-i18n-placeholder="pinPh" placeholder="Mot de passe" style="text-align:center;margin-bottom:12px;">
       <br>
       <button class="btn" id="pinBtn" data-i18n="enterBtn">Entrer</button>
       <div class="form-msg" id="pinMsg"></div>
@@ -285,8 +286,6 @@
 const PREFACE_TEXT_FR = "";
 const PREFACE_TEXT_EN = "";
 
-const ADMIN_PIN = "0000";
-
 /* ============================================================
    Connexion Supabase — base de données publique et partagée
 ============================================================ */
@@ -319,7 +318,7 @@ const I18N = {
     prefaceEmpty: "La préface n'a pas encore été rédigée.",
     refIntro: "Compléments d'information sur certaines définitions du dictionnaire.",
     refEmpty: "Aucune note de référence pour l'instant.",
-    adminAccess: "Accès administrateur", pinPh: "Code d'accès", enterBtn: "Entrer",
+    adminAccess: "Accès administrateur", emailPh: "Email", pinPh: "Mot de passe", enterBtn: "Entrer",
     pinError: "Code incorrect.",
     adminBadge: "Mode administrateur", logoutBtn: "Se déconnecter",
     pendingTitle: "Propositions en attente", loading: "Chargement...",
@@ -357,7 +356,7 @@ const I18N = {
     prefaceEmpty: "The preface has not been written yet.",
     refIntro: "Additional information on certain dictionary definitions.",
     refEmpty: "No reference notes yet.",
-    adminAccess: "Administrator access", pinPh: "Access code", enterBtn: "Enter",
+    adminAccess: "Administrator access", emailPh: "Email", pinPh: "Password", enterBtn: "Enter",
     pinError: "Incorrect code.",
     adminBadge: "Administrator mode", logoutBtn: "Log out",
     pendingTitle: "Pending submissions", loading: "Loading...",
@@ -506,25 +505,42 @@ document.getElementById('addBtn').addEventListener('click', async () => {
   }
 });
 
-/* ---------- Admin : connexion ---------- */
-document.getElementById('pinBtn').addEventListener('click', () => {
-  const pin = document.getElementById('pinInput').value;
+/* ---------- Admin : connexion via Supabase Auth ---------- */
+document.getElementById('pinBtn').addEventListener('click', async () => {
+  const email = document.getElementById('emailInput').value.trim();
+  const password = document.getElementById('pinInput').value;
   const pinMsg = document.getElementById('pinMsg');
-  if(pin === ADMIN_PIN){
-    isAdmin = true;
-    document.getElementById('adminGate').style.display = 'none';
-    document.getElementById('adminPanel').style.display = 'block';
-    renderPending();
-  } else {
-    pinMsg.style.color = 'var(--danger)'; pinMsg.textContent = t('pinError');
+  pinMsg.style.color = 'var(--ink-dim)';
+  pinMsg.textContent = t('loading');
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if(error){
+    pinMsg.style.color = 'var(--danger)';
+    pinMsg.textContent = t('pinError');
+    return;
   }
+  isAdmin = true;
+  pinMsg.textContent = '';
+  document.getElementById('adminGate').style.display = 'none';
+  document.getElementById('adminPanel').style.display = 'block';
+  renderPending();
 });
-document.getElementById('logoutBtn').addEventListener('click', () => {
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await sb.auth.signOut();
   isAdmin = false;
   document.getElementById('adminGate').style.display = 'block';
   document.getElementById('adminPanel').style.display = 'none';
   document.getElementById('pinInput').value = '';
 });
+
+/* Restaure la session admin si déjà connecté (persistance du navigateur) */
+async function restoreAdminSession(){
+  const { data } = await sb.auth.getSession();
+  if(data && data.session){
+    isAdmin = true;
+    document.getElementById('adminGate').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'block';
+  }
+}
 
 /* ---------- Admin : propositions en attente ---------- */
 async function renderPending(){
@@ -632,6 +648,7 @@ applyTheme();
 applyLanguage();
 loadApproved();
 loadReference();
+restoreAdminSession();
 </script>
 </body>
 </html>

@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dictionary of The Source</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#efe6d1">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,400&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #efe6d1;
+    --paper-2: #e6dabd;
+    --ink: #17140f;
+    --ink-dim: rgba(23,20,15,0.62);
+    --line: rgba(23,20,15,0.16);
+    --gold: #9c7a34;
+    --source: #2f6f63;
+    --danger: #a34428;
+  }
+  body.dark{
+    --paper: #14161f;
+    --paper-2: #1c1f2b;
+    --ink: #f0ead9;
+    --ink-dim: rgba(240,234,217,0.62);
+    --line: rgba(240,234,217,0.16);
+    --gold: #c9a15a;
+    --source: #49d6c4;
+    --danger: #d97a56;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    transition:background 0.2s, color 0.2s;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:36px 20px 40px;}
+
+  /* Top controls */
+  .top-controls{
+    display:flex;justify-content:flex-end;gap:8px;margin-bottom:20px;
+  }
+  .icon-btn{
+    font-family:'Space Mono',monospace;font-size:0.72rem;letter-spacing:0.04em;
+    background:var(--paper-2);border:1px solid var(--line);color:var(--ink);
+    padding:7px 12px;border-radius:20px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .icon-btn:hover{border-color:var(--source);color:var(--source);}
+
+  /* Header / signature vivante */
+  header{position:relative;margin-bottom:30px;text-align:center;}
+  .spring{width:64px;height:64px;margin:0 auto 18px;position:relative;}
+  .spring span{
+    position:absolute;inset:0;border-radius:50%;
+    border:1px solid var(--source);opacity:0;
+    animation:ripple 3.6s ease-out infinite;
+  }
+  .spring span:nth-child(2){animation-delay:1.2s;}
+  .spring span:nth-child(3){animation-delay:2.4s;}
+  .spring::after{
+    content:'';position:absolute;left:50%;top:50%;width:8px;height:8px;
+    background:var(--source);border-radius:50%;transform:translate(-50%,-50%);
+    box-shadow:0 0 18px 4px rgba(47,111,99,0.45);
+  }
+  body.dark .spring::after{box-shadow:0 0 18px 4px rgba(73,214,196,0.6);}
+  @keyframes ripple{0%{transform:scale(0.15);opacity:0.9;}100%{transform:scale(1);opacity:0;}}
+  @media (prefers-reduced-motion: reduce){.spring span{animation:none;opacity:0.35;}}
+  h1{font-family:'Fraunces',serif;font-weight:500;font-size:2.7rem;letter-spacing:-0.01em;margin:0 0 8px;}
+  h1 em{font-style:italic;color:var(--source);}
+  .tagline{color:var(--ink-dim);font-size:1.05rem;max-width:460px;margin:0 auto;}
+
+  /* Nav tabs */
+  nav{display:flex;justify-content:center;gap:6px;margin:28px 0 34px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+  nav button{
+    font-family:'Space Mono',monospace;font-size:0.78rem;letter-spacing:0.06em;
+    text-transform:uppercase;background:none;border:none;color:var(--ink-dim);
+    padding:10px 14px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;
+  }
+  nav button.active{color:var(--ink);border-bottom-color:var(--source);}
+  nav button:hover{color:var(--ink);}
+  nav .admin-link{margin-left:auto;color:var(--gold);}
+
+  .page{display:none;}
+  .page.active{display:block;}
+
+  .well{background:var(--paper-2);border:1px solid var(--line);border-radius:4px;padding:22px;margin-bottom:30px;}
+  .well h2{font-family:'Space Mono',monospace;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin:0 0 16px;}
+  .well .hint{font-size:0.85rem;color:var(--ink-dim);margin-top:-8px;margin-bottom:14px;}
+  .field{margin-bottom:14px;}
+  label{display:block;font-size:0.78rem;color:var(--ink-dim);margin-bottom:6px;font-family:'Space Mono',monospace;}
+  input[type=text], input[type=password], textarea{
+    width:100%;background:var(--paper);border:1px solid var(--line);border-radius:3px;color:var(--ink);
+    padding:10px 12px;font-family:'Inter',sans-serif;font-size:0.95rem;resize:vertical;
+  }
+  input:focus, textarea:focus{outline:none;border-color:var(--source);}
+  .field-row{display:flex;gap:12px;}
+  .field-row .field{flex:1;}
+  button.btn{
+    font-family:'Space Mono',monospace;font-size:0.78rem;letter-spacing:0.06em;text-transform:uppercase;
+    border:1px solid var(--source);background:transparent;color:var(--source);
+    padding:10px 18px;border-radius:3px;cursor:pointer;transition:background 0.15s, color 0.15s;
+  }
+  button.btn:hover{background:var(--source);color:var(--paper);}
+  button.btn.danger{border-color:var(--danger);color:var(--danger);}
+  button.btn.danger:hover{background:var(--danger);color:var(--paper);}
+  button:focus-visible{outline:2px solid var(--ink);outline-offset:2px;}
+  .form-msg{font-size:0.82rem;color:var(--source);margin-top:10px;min-height:1em;}
+
+  .search-row{margin-bottom:24px;}
+  .search-row input{font-family:'Fraunces',serif;font-size:1.1rem;}
+
+  .count-line{font-family:'Space Mono',monospace;font-size:0.72rem;color:var(--ink-dim);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:16px;}
+  .entry{border-top:1px solid var(--line);padding:22px 0;display:flex;gap:16px;}
+  .entry:last-child{border-bottom:1px solid var(--line);}
+  .entry-index{font-family:'Space Mono',monospace;font-size:0.7rem;color:var(--gold);padding-top:6px;min-width:26px;}
+  .entry-body{flex:1;}
+  .entry-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  .headword{font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:1.6rem;color:var(--ink);}
+  .speak-btn{border:none;background:none;color:var(--gold);font-family:'Space Mono',monospace;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;padding:2px 0;cursor:pointer;}
+  .speak-btn:hover{color:var(--source);}
+  .definition{margin:8px 0 0;font-size:1.08rem;line-height:1.55;}
+  .meta-line{margin-top:10px;font-size:0.85rem;color:var(--ink-dim);font-style:italic;}
+  .meta-line strong{font-style:normal;color:var(--gold);font-family:'Space Mono',monospace;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;margin-right:6px;}
+  .media-gallery{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+  .media-gallery img{width:84px;height:84px;object-fit:cover;border-radius:4px;border:1px solid var(--line);}
+  .media-videos{margin-top:14px;}
+  .media-videos video{width:100%;max-width:420px;border-radius:4px;border:1px solid var(--line);display:block;}
+  .uploader-credit{
+    margin-top:8px;font-family:'Space Mono',monospace;font-size:0.7rem;letter-spacing:0.04em;
+    color:var(--gold);text-transform:uppercase;
+  }
+  .empty{text-align:center;color:var(--ink-dim);padding:50px 0;font-family:'Fraunces',serif;font-style:italic;font-size:1.1rem;}
+
+  .preface-text{font-family:'Fraunces',serif;font-size:1.18rem;line-height:1.85;white-space:pre-wrap;}
+  .preface-text.placeholder{color:var(--ink-dim);font-style:italic;}
+
+  .ref-entry{border-top:1px solid var(--line);padding:18px 0;}
+  .ref-entry:last-child{border-bottom:1px solid var(--line);}
+  .ref-word{font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--source);text-transform:uppercase;letter-spacing:0.05em;}
+  .ref-note{margin:6px 0 0;font-size:0.95rem;line-height:1.55;}
+
+  .pending-item{border:1px solid var(--line);border-radius:4px;padding:16px;margin-bottom:12px;background:var(--paper);}
+  .pending-actions{display:flex;gap:10px;margin-top:12px;}
+  .admin-gate{max-width:320px;margin:60px auto;text-align:center;}
+  .badge{font-family:'Space Mono',monospace;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--source);border:1px solid var(--source);border-radius:10px;padding:2px 8px;}
+
+  footer{text-align:center;margin-top:60px;color:var(--ink-dim);font-family:'Space Mono',monospace;font-size:0.68rem;letter-spacing:0.05em;line-height:1.8;}
+  .brand-bar{
+    text-align:center;margin-top:26px;padding-top:18px;border-top:1px solid var(--line);
+    font-family:'Space Mono',monospace;font-size:0.7rem;letter-spacing:0.06em;color:var(--ink-dim);
+    text-transform:uppercase;
+  }
+  .contact-fab{
+    display:inline-flex;align-items:center;gap:6px;margin-top:10px;
+    font-family:'Space Mono',monospace;font-size:0.7rem;color:var(--source);
+    border:1px solid var(--source);border-radius:20px;padding:6px 14px;text-decoration:none;
+  }
+  .contact-fab:hover{background:var(--source);color:var(--paper);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top-controls">
+    <button class="icon-btn" id="installBtn" style="display:none;">📲 <span data-i18n="installBtn">Installer</span></button>
+    <button class="icon-btn" id="langBtn">🌐 <span id="langBtnLabel">EN</span></button>
+    <button class="icon-btn" id="themeBtn">🌙 <span id="themeBtnLabel" data-i18n="themeDark">Sombre</span></button>
+  </div>
+  <div id="installMsg" class="form-msg" style="display:none;text-align:right;margin-bottom:10px;"></div>
+
+  <header>
+    <div class="spring"><span></span><span></span><span></span></div>
+    <h1>Dictionary of <em>The Source</em></h1>
+    <p class="tagline" data-i18n="tagline">Un dictionnaire vivant, nourri chaque jour, gratuit et ouvert à tous.</p>
+    <p id="syncStatus" style="font-family:'Space Mono',monospace;font-size:0.68rem;letter-spacing:0.05em;color:var(--ink-dim);margin-top:10px;text-transform:uppercase;"></p>
+  </header>
+
+  <nav>
+    <button class="tab-btn active" data-page="accueil" data-i18n="navHome">Accueil</button>
+    <button class="tab-btn" data-page="preface" data-i18n="navPreface">Préface</button>
+    <button class="tab-btn" data-page="reference" data-i18n="navReference">Référence</button>
+    <button class="tab-btn admin-link" data-page="admin" data-i18n="navAdmin">Administration</button>
+  </nav>
+
+  <!-- ACCUEIL -->
+  <section class="page active" id="page-accueil">
+
+    <div class="well">
+      <h2 data-i18n="proposeTitle">Proposer une entrée</h2>
+      <p class="hint" data-i18n="proposeHint">Chaque proposition est envoyée à l'administrateur et n'apparaît publiquement qu'une fois approuvée.</p>
+      <div class="field-row">
+        <div class="field">
+          <label data-i18n="labelWord">Mot</label>
+          <input type="text" id="wordInput" data-i18n-placeholder="phWord" placeholder="ex. sourcier">
+        </div>
+        <div class="field">
+          <label data-i18n="labelLang">Langue</label>
+          <input type="text" id="langInput" data-i18n-placeholder="phLang" placeholder="ex. français">
+        </div>
+      </div>
+      <div class="field">
+        <label data-i18n="labelDef">Définition</label>
+        <textarea id="defInput" rows="2" data-i18n-placeholder="phDef" placeholder="Ce que signifie ce mot..."></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label data-i18n="labelExample">Exemple d'usage (optionnel)</label>
+          <input type="text" id="exampleInput" data-i18n-placeholder="phExample" placeholder="ex. Le sourcier a trouvé l'eau.">
+        </div>
+        <div class="field">
+          <label data-i18n="labelOrigin">Origine / étymologie (optionnel)</label>
+          <input type="text" id="originInput" data-i18n-placeholder="phOrigin" placeholder="ex. du latin fons...">
+        </div>
+      </div>
+      <div class="field">
+        <label data-i18n="labelTag">Pseudo / tag (optionnel — pour être crédité si tu ajoutes une vidéo)</label>
+        <input type="text" id="tagInput" data-i18n-placeholder="phTag" placeholder="ex. Nour, @sourcier_du_dimanche...">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label data-i18n="labelImages">Images (5 maximum, 50 Mo/fichier max)</label>
+          <input type="file" id="imageInput" accept="image/*" multiple>
+        </div>
+        <div class="field">
+          <label data-i18n="labelVideos">Vidéos (2 maximum, 10 min et 50 Mo/fichier max)</label>
+          <input type="file" id="videoInput" accept="video/*" multiple>
+        </div>
+      </div>
+      <button class="btn" id="addBtn" data-i18n="submitBtn">Soumettre pour approbation</button>
+      <div class="form-msg" id="formMsg"></div>
+    </div>
+
+    <div class="search-row">
+      <input type="text" id="searchInput" data-i18n-placeholder="searchPh" placeholder="Rechercher un mot...">
+    </div>
+
+    <div class="count-line" id="countLine">…</div>
+    <div id="entries"></div>
+  </section>
+
+  <!-- PREFACE -->
+  <section class="page" id="page-preface">
+    <div id="prefaceContent"></div>
+  </section>
+
+  <!-- REFERENCE -->
+  <section class="page" id="page-reference">
+    <p class="hint" data-i18n="refIntro">Compléments d'information sur certaines définitions du dictionnaire.</p>
+    <div id="refEntries"></div>
+  </section>
+
+  <!-- ADMIN -->
+  <section class="page" id="page-admin">
+    <div id="adminGate" class="admin-gate">
+      <p class="hint" data-i18n="adminAccess">Accès administrateur</p>
+      <input type="text" id="emailInput" data-i18n-placeholder="emailPh" placeholder="Email" style="text-align:center;margin-bottom:10px;">
+      <input type="password" id="pinInput" data-i18n-placeholder="pinPh" placeholder="Mot de passe" style="text-align:center;margin-bottom:12px;">
+      <br>
+      <button class="btn" id="pinBtn" data-i18n="enterBtn">Entrer</button>
+      <div class="form-msg" id="pinMsg"></div>
+    </div>
+    <div id="adminPanel" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <span class="badge" data-i18n="adminBadge">Mode administrateur</span>
+        <button class="btn danger" id="logoutBtn" style="font-size:0.68rem;padding:6px 12px;" data-i18n="logoutBtn">Se déconnecter</button>
+      </div>
+
+      <div class="well">
+        <h2 data-i18n="pendingTitle">Propositions en attente</h2>
+        <div id="pendingList"><p class="hint" data-i18n="loading">Chargement...</p></div>
+      </div>
+
+      <div class="well">
+        <h2 data-i18n="refAddTitle">Ajouter une note de référence</h2>
+        <div class="field-row">
+          <div class="field">
+            <label data-i18n="refWordLabel">Mot concerné</label>
+            <input type="text" id="refWordInput" data-i18n-placeholder="phWord" placeholder="ex. sourcier">
+          </div>
+        </div>
+        <div class="field">
+          <label data-i18n="refNoteLabel">Note complémentaire</label>
+          <textarea id="refNoteInput" rows="3" data-i18n-placeholder="refNotePh" placeholder="Précisions, sources, variantes régionales..."></textarea>
+        </div>
+        <button class="btn" id="addRefBtn" data-i18n="refPublishBtn">Publier la note</button>
+        <div class="form-msg" id="refMsg"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span data-i18n="footer1">Dictionary of The Source · seules les définitions approuvées sont publiques</span><br>
+    <span data-i18n="footer2">Prototype v0.3 — synchronisation en ligne, lecture hors-ligne et traduction complète à venir</span>
+    <br>
+    <a class="contact-fab" href="mailto:nourenterprise90@gmail.com" id="contactBtn">✉ <span data-i18n="contactBtn">Contact</span></a>
+  </footer>
+
+  <div class="brand-bar">Propulsée par Nour Enterprises - OUVERT AU PUBLIQUE.</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ============================================================
+   PRÉFACE — modifiez ce texte directement ici, puis rechargez.
+============================================================ */
+const PREFACE_TEXT_FR = `DoTS — Dictionary of The Source
+
+Nous utilisons des mots chaque jour. Nous les prononçons, nous les écrivons, nous les enseignons, nous les traduisons. Pourtant, derrière chaque mot se trouve une histoire, une origine, un sens qui a évolué avec le temps.
+
+DoTS est né d'une question simple : et si nous prenions le temps de remonter à la source ?
+
+Le mot Source prend ici un sens particulier. Il désigne la Source originelle, celle de laquelle procèdent la lumière, l'énergie et, dans notre vision, toute existence.
+
+Ainsi, DoTS n'a pas été pensé comme un simple dictionnaire destiné à accumuler des définitions. Il est conçu comme un espace où les mots, les concepts, leurs origines et leurs références peuvent être réunis, confrontés et reliés afin de mieux comprendre ce qu'ils portent réellement.
+
+Le nom DoTS, acronyme de Dictionary of The Source, porte lui-même cette idée.
+
+En anglais, dots signifie « points ». Chaque mot peut être considéré comme un point. Chaque définition apporte une information. Chaque origine, chaque racine, chaque référence crée une connexion avec un autre point.
+
+Et lorsque ces points sont reliés, une image commence à apparaître.
+
+Every word is a dot.
+Every meaning is a connection.
+Every connection leads back to The Source.
+
+DoTS est donc une invitation à ne pas nous contenter de savoir qu'une chose existe, mais à chercher à comprendre ce qu'elle signifie, d'où elle vient, comment elle s'est construite et avec quoi elle est liée.
+
+Car connaître un mot n'est pas nécessairement le comprendre.
+
+Et comprendre quelque chose, c'est parfois commencer un voyage vers son origine.
+
+DoTS est ce voyage.
+
+Un dictionnaire ouvert, vivant et évolutif, construit avec les contributions de ceux qui souhaitent partager, vérifier et approfondir la connaissance.
+
+Parce que la connaissance n'est pas seulement une accumulation d'informations.
+
+Elle est aussi une manière de relier les points.
+
+Et peut-être qu'en reliant suffisamment de points, nous finirons par mieux comprendre le chemin qui nous ramène à The Source.`;
+
+const PREFACE_TEXT_EN = `DoTS — Dictionary of The Source
+
+We use words every day. We speak them, write them, teach them, translate them. Yet behind every word lies a story, an origin, a meaning that has evolved over time.
+
+DoTS was born from a simple question: what if we took the time to trace things back to the source?
+
+The word Source carries a particular meaning here. It refers to the original Source, the one from which light, energy, and, in our vision, all existence proceed.
+
+DoTS was therefore not conceived as a simple dictionary meant to accumulate definitions. It is designed as a space where words, concepts, their origins, and their references can be gathered, compared, and connected in order to better understand what they truly carry.
+
+The name DoTS, an acronym for Dictionary of The Source, carries this idea in itself.
+
+In English, dots means "points." Every word can be seen as a point. Every definition adds a piece of information. Every origin, every root, every reference creates a connection with another point.
+
+And when these points are connected, a picture begins to emerge.
+
+Every word is a dot.
+Every meaning is a connection.
+Every connection leads back to The Source.
+
+DoTS is therefore an invitation not to be satisfied with simply knowing that something exists, but to seek to understand what it means, where it comes from, how it was formed, and what it is connected to.
+
+Because knowing a word is not necessarily understanding it.
+
+And understanding something is sometimes the beginning of a journey toward its origin.
+
+DoTS is that journey.
+
+An open, living, evolving dictionary, built with the contributions of those who wish to share, verify, and deepen knowledge.
+
+Because knowledge is not only an accumulation of information.
+
+It is also a way of connecting the dots.
+
+And perhaps, by connecting enough dots, we will come to better understand the path that leads us back to The Source.`;
+
+/* ============================================================
+   Connexion Supabase — base de données publique et partagée
+============================================================ */
+const SUPABASE_URL = "https://wxogyuuqkwtnlbuldlky.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4b2d5dXVxa3d0bmxidWxkbGt5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NTI0MTQsImV4cCI6MjEwMzIyODQxNH0.kSfQ4B_E9khNFiY37ycE7Lkvv5G791WkgXDgCEqdEs4";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let isAdmin = false;
+let approvedEntries = [];
+let currentLang = 'fr';
+
+/* ---------- Traductions ---------- */
+const I18N = {
+  fr: {
+    tagline: "Un dictionnaire vivant, nourri chaque jour, gratuit et ouvert à tous.",
+    themeDark: "Sombre", themeLight: "Clair",
+    navHome: "Accueil", navPreface: "Préface", navReference: "Référence", navAdmin: "Administration",
+    proposeTitle: "Proposer une entrée",
+    proposeHint: "Chaque proposition est envoyée à l'administrateur et n'apparaît publiquement qu'une fois approuvée.",
+    labelWord: "Mot", labelLang: "Langue", labelDef: "Définition",
+    labelExample: "Exemple d'usage (optionnel)", labelOrigin: "Origine / étymologie (optionnel)",
+    labelTag: "Pseudo / tag (optionnel — pour être crédité si tu ajoutes une vidéo)",
+    labelImages: "Images (5 maximum, 50 Mo/fichier max)",
+    labelVideos: "Vidéos (2 maximum, 10 min et 50 Mo/fichier max)",
+    phTag: "ex. Nour, @sourcier_du_dimanche...",
+    phWord: "ex. sourcier", phLang: "ex. français", phDef: "Ce que signifie ce mot...",
+    phExample: "ex. Le sourcier a trouvé l'eau.", phOrigin: "ex. du latin fons...",
+    submitBtn: "Soumettre pour approbation",
+    searchPh: "Rechercher un mot...",
+    listenBtn: "▸ écouter", exampleLabel: "Exemple", originLabel: "Origine",
+    emptyAll: "Le dictionnaire est vide. Propose le premier mot ci-dessus.",
+    emptySearch: "Aucun mot ne correspond à ta recherche.",
+    countWord: "mot", countWords: "mots", countPublished: "0 mot publié pour l'instant",
+    prefaceEmpty: "La préface n'a pas encore été rédigée.",
+    refIntro: "Compléments d'information sur certaines définitions du dictionnaire.",
+    refEmpty: "Aucune note de référence pour l'instant.",
+    adminAccess: "Accès administrateur", emailPh: "Email", pinPh: "Mot de passe", enterBtn: "Entrer",
+    pinError: "Code incorrect.",
+    adminBadge: "Mode administrateur", logoutBtn: "Se déconnecter",
+    pendingTitle: "Propositions en attente", loading: "Chargement...",
+    pendingEmpty: "Aucune proposition en attente.",
+    approveBtn: "Approuver", rejectBtn: "Rejeter",
+    translateBtn: "🌐 Traduire & réviser", translating: "Traduction en cours...", publishBtn: "Publier",
+    refAddTitle: "Ajouter une note de référence", refWordLabel: "Mot concerné",
+    refNoteLabel: "Note complémentaire", refNotePh: "Précisions, sources, variantes régionales...",
+    refPublishBtn: "Publier la note",
+    errWordDef: "Le mot et la définition sont nécessaires.",
+    errTooManyImages: "5 images maximum.",
+    errTooManyVideos: "2 vidéos maximum.",
+    errFileTooBig: "Fichier trop volumineux (50 Mo maximum) :",
+    errVideoTooLong: "Vidéo trop longue (10 minutes maximum) :",
+    uploadingMedia: "Envoi des fichiers en cours...",
+    uploadedBy: "🎥 mis en ligne par",
+    errWordNote: "Le mot et la note sont nécessaires.",
+    errSubmit: "Échec de l'envoi — réessaie.",
+    okSubmit: "envoyé pour approbation. Merci !",
+    okRefPublish: "Note publiée.",
+    errRefPublish: "Échec de la publication.",
+    footer1: "Dictionary of The Source · seules les définitions approuvées sont publiques",
+    footer2: "Prototype v0.3 — synchronisation en ligne, lecture hors-ligne et traduction complète à venir",
+    contactBtn: "Contact",
+    syncedNow: "● en ligne — synchronisé à l'instant",
+    offlineSince: "○ hors-ligne — dernière synchro le",
+    offlineNoSync: "○ hors-ligne — aucune donnée synchronisée pour l'instant",
+    installBtn: "Installer", installedMsg: "Application installée !",
+    installIOS: "Sur iPhone/iPad : appuie sur le bouton Partager de Safari, puis « Sur l'écran d'accueil ».",
+    installManual: "Ouvre le menu de ton navigateur et choisis « Installer l'application » ou « Ajouter à l'écran d'accueil ».",
+    installUnsupported: "Ce navigateur ne permet pas d'installer d'application web. Ouvre ce site avec Chrome, Edge ou Samsung Internet pour l'installer."
+  },
+  en: {
+    tagline: "A living dictionary, nourished daily, free and open to all.",
+    themeDark: "Dark", themeLight: "Light",
+    navHome: "Home", navPreface: "Preface", navReference: "Reference", navAdmin: "Admin",
+    proposeTitle: "Suggest an entry",
+    proposeHint: "Each submission is sent to the administrator and only appears publicly once approved.",
+    labelWord: "Word", labelLang: "Language", labelDef: "Definition",
+    labelExample: "Usage example (optional)", labelOrigin: "Origin / etymology (optional)",
+    labelTag: "Nickname / tag (optional — to be credited if you add a video)",
+    labelImages: "Images (5 max, 50 MB per file max)",
+    labelVideos: "Videos (2 max, 10 min and 50 MB per file max)",
+    phTag: "e.g. Nour, @sunday_diviner...",
+    phWord: "e.g. water diviner", phLang: "e.g. English", phDef: "What this word means...",
+    phExample: "e.g. The diviner found water.", phOrigin: "e.g. from Latin fons...",
+    submitBtn: "Submit for approval",
+    searchPh: "Search a word...",
+    listenBtn: "▸ listen", exampleLabel: "Example", originLabel: "Origin",
+    emptyAll: "The dictionary is empty. Suggest the first word above.",
+    emptySearch: "No word matches your search.",
+    countWord: "word", countWords: "words", countPublished: "0 words published yet",
+    prefaceEmpty: "The preface has not been written yet.",
+    refIntro: "Additional information on certain dictionary definitions.",
+    refEmpty: "No reference notes yet.",
+    adminAccess: "Administrator access", emailPh: "Email", pinPh: "Password", enterBtn: "Enter",
+    pinError: "Incorrect code.",
+    adminBadge: "Administrator mode", logoutBtn: "Log out",
+    pendingTitle: "Pending submissions", loading: "Loading...",
+    pendingEmpty: "No pending submissions.",
+    approveBtn: "Approve", rejectBtn: "Reject",
+    translateBtn: "🌐 Translate & review", translating: "Translating...", publishBtn: "Publish",
+    refAddTitle: "Add a reference note", refWordLabel: "Related word",
+    refNoteLabel: "Additional note", refNotePh: "Details, sources, regional variants...",
+    refPublishBtn: "Publish note",
+    errWordDef: "Word and definition are required.",
+    errTooManyImages: "5 images maximum.",
+    errTooManyVideos: "2 videos maximum.",
+    errFileTooBig: "File too large (50 MB maximum):",
+    errVideoTooLong: "Video too long (10 minutes maximum):",
+    uploadingMedia: "Uploading files...",
+    uploadedBy: "🎥 uploaded by",
+    errWordNote: "Word and note are required.",
+    errSubmit: "Submission failed — try again.",
+    okSubmit: "submitted for approval. Thank you!",
+    okRefPublish: "Note published.",
+    errRefPublish: "Publishing failed.",
+    footer1: "Dictionary of The Source · only approved definitions are public",
+    footer2: "Prototype v0.3 — online sync, offline reading and full translation coming soon",
+    contactBtn: "Contact",
+    syncedNow: "● online — synced just now",
+    offlineSince: "○ offline — last synced on",
+    offlineNoSync: "○ offline — no data synced yet",
+    installBtn: "Install", installedMsg: "App installed!",
+    installIOS: "On iPhone/iPad: tap Safari's Share button, then \"Add to Home Screen\".",
+    installManual: "Open your browser's menu and choose \"Install app\" or \"Add to Home Screen\".",
+    installUnsupported: "This browser doesn't support installing web apps. Open this site with Chrome, Edge or Samsung Internet to install it."
+  }
+};
+function t(key){ return (I18N[currentLang] && I18N[currentLang][key]) || key; }
+
+function applyLanguage(){
+  document.documentElement.lang = currentLang;
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
+  document.getElementById('langBtnLabel').textContent = currentLang === 'fr' ? 'EN' : 'FR';
+  renderPreface();
+  renderEntries(document.getElementById('searchInput').value);
+  loadReference();
+  if(isAdmin) renderPending();
+}
+
+document.getElementById('langBtn').addEventListener('click', () => {
+  currentLang = currentLang === 'fr' ? 'en' : 'fr';
+  applyLanguage();
+});
+
+/* ---------- Thème clair / sombre ---------- */
+function applyTheme(){
+  const dark = document.body.classList.contains('dark');
+  document.getElementById('themeBtnLabel').textContent = dark ? t('themeLight') : t('themeDark');
+  document.getElementById('themeBtn').firstChild.textContent = dark ? '☀ ' : '🌙 ';
+}
+document.getElementById('themeBtn').addEventListener('click', () => {
+  document.body.classList.toggle('dark');
+  applyTheme();
+});
+
+/* ---------- Installation de la PWA ---------- */
+let deferredInstallPrompt = null;
+const installBtn = document.getElementById('installBtn');
+const installMsg = document.getElementById('installMsg');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  installBtn.style.display = 'inline-flex';
+});
+
+window.addEventListener('appinstalled', () => {
+  installBtn.style.display = 'none';
+  installMsg.style.display = 'block';
+  installMsg.style.color = 'var(--source)';
+  installMsg.textContent = t('installedMsg');
+  deferredInstallPrompt = null;
+});
+
+installBtn.addEventListener('click', async () => {
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    return;
+  }
+  showManualInstallInstructions();
+});
+
+function showManualInstallInstructions(){
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isFirefox = /firefox/i.test(navigator.userAgent);
+  installMsg.style.display = 'block';
+  installMsg.style.color = 'var(--ink-dim)';
+  if(isIOS){
+    installMsg.textContent = t('installIOS');
+  } else if(isFirefox){
+    installMsg.textContent = t('installUnsupported');
+  } else {
+    installMsg.textContent = t('installManual');
+  }
+}
+
+// Le bouton reste toujours visible : sur Chrome/Edge/Samsung Internet il déclenche
+// l'installation native, sur Safari iOS il affiche les étapes manuelles, et sur les
+// navigateurs qui ne supportent pas l'installation (ex. Firefox), il explique pourquoi
+// plutôt que de disparaître silencieusement.
+installBtn.style.display = 'inline-flex';
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('page-' + btn.dataset.page).classList.add('active');
+    if(btn.dataset.page === 'admin' && isAdmin) renderPending();
+  });
+});
+
+/* ---------- Préface ---------- */
+function renderPreface(){
+  const el = document.getElementById('prefaceContent');
+  const text = currentLang === 'fr' ? PREFACE_TEXT_FR : PREFACE_TEXT_EN;
+  if(text && text.trim().length > 0){
+    el.innerHTML = '<p class="preface-text">' + escapeHtml(text) + '</p>';
+  } else {
+    el.innerHTML = '<p class="preface-text placeholder">' + escapeHtml(t('prefaceEmpty')) + '</p>';
+  }
+}
+
+/* ---------- Dictionnaire public ---------- */
+const OFFLINE_WORDS_KEY = 'dots_offline_words_v1';
+const OFFLINE_REF_KEY = 'dots_offline_refs_v1';
+const OFFLINE_SYNC_KEY = 'dots_offline_sync_at';
+
+async function loadApproved(){
+  const { data, error } = await sb
+    .from('words')
+    .select('*')
+    .eq('status', 'approved')
+    .order('word', { ascending: true });
+
+  if(error){
+    // Pas de connexion ou erreur réseau : on lit la dernière copie enregistrée localement.
+    approvedEntries = readOfflineCache(OFFLINE_WORDS_KEY);
+    renderEntries();
+    updateSyncStatus(false);
+    return;
+  }
+
+  approvedEntries = data || [];
+  writeOfflineCache(OFFLINE_WORDS_KEY, approvedEntries);
+  localStorage.setItem(OFFLINE_SYNC_KEY, new Date().toISOString());
+  renderEntries();
+  updateSyncStatus(true);
+}
+
+function readOfflineCache(key){
+  try{
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ return []; }
+}
+function writeOfflineCache(key, value){
+  try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){ /* stockage plein ou indisponible */ }
+}
+
+function updateSyncStatus(isOnline){
+  const el = document.getElementById('syncStatus');
+  if(!el) return;
+  if(isOnline){
+    el.textContent = t('syncedNow');
+    el.style.color = 'var(--source)';
+  } else {
+    const lastSync = localStorage.getItem(OFFLINE_SYNC_KEY);
+    el.textContent = lastSync
+      ? t('offlineSince') + ' ' + new Date(lastSync).toLocaleDateString(currentLang === 'fr' ? 'fr-FR' : 'en-US')
+      : t('offlineNoSync');
+    el.style.color = 'var(--ink-dim)';
+  }
+}
+
+function localizedField(e, base){
+  const val = e[base + '_' + currentLang];
+  return (val && val.trim()) ? val : e[base];
+}
+
+function renderEntries(filter){
+  const container = document.getElementById('entries');
+  const countLine = document.getElementById('countLine');
+  const q = (filter || '').trim().toLowerCase();
+  const list = q ? approvedEntries.filter(e => (localizedField(e,'word')||'').toLowerCase().includes(q)) : approvedEntries;
+
+  countLine.textContent = approvedEntries.length === 0
+    ? t('countPublished')
+    : `${list.length} / ${approvedEntries.length} ${approvedEntries.length>1 ? t('countWords') : t('countWord')}`;
+
+  if(list.length === 0){
+    container.innerHTML = '<div class="empty">' + (approvedEntries.length === 0 ? t('emptyAll') : t('emptySearch')) + '</div>';
+    return;
+  }
+
+  container.innerHTML = list.map((e, i) => {
+    const word = localizedField(e, 'word');
+    const definition = localizedField(e, 'definition');
+    const example = localizedField(e, 'example');
+    const origin = localizedField(e, 'origin');
+    const images = Array.isArray(e.image_urls) ? e.image_urls : [];
+    const videos = Array.isArray(e.video_urls) ? e.video_urls : [];
+    const imagesHtml = images.length ? `
+      <div class="media-gallery">
+        ${images.map(url => `<img src="${escapeAttr(url)}" alt="${escapeAttr(word)}" loading="lazy">`).join('')}
+      </div>` : '';
+    const videosHtml = videos.length ? `
+      <div class="media-videos">
+        ${videos.map(url => `<video controls preload="metadata" src="${escapeAttr(url)}"></video>`).join('')}
+        ${e.uploader_tag ? `<div class="uploader-credit">${t('uploadedBy')} <strong>${escapeHtml(e.uploader_tag)}</strong></div>` : ''}
+      </div>` : '';
+    return `
+    <div class="entry">
+      <div class="entry-index">${String(i+1).padStart(2,'0')}</div>
+      <div class="entry-body">
+        <div class="entry-head">
+          <span class="headword">${escapeHtml(word)}</span>
+          <button class="speak-btn" data-word="${escapeAttr(word)}" data-def="${escapeAttr(definition)}" data-lang="${currentLang}">${t('listenBtn')}</button>
+        </div>
+        <p class="definition">${escapeHtml(definition)}</p>
+        ${example ? `<div class="meta-line"><strong>${t('exampleLabel')}</strong>${escapeHtml(example)}</div>` : ''}
+        ${origin ? `<div class="meta-line"><strong>${t('originLabel')}</strong>${escapeHtml(origin)}</div>` : ''}
+        ${imagesHtml}
+        ${videosHtml}
+      </div>
+    </div>
+  `;
+  }).join('');
+
+  container.querySelectorAll('.speak-btn').forEach(btn => {
+    btn.addEventListener('click', () => speak(btn.dataset.word + '. ' + btn.dataset.def, btn.dataset.lang));
+  });
+}
+
+document.getElementById('searchInput').addEventListener('input', (e) => renderEntries(e.target.value));
+
+/* ---------- Soumission publique ---------- */
+/* ---------- Validation et envoi des médias vers Supabase Storage ---------- */
+const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50 Mo, limite du plan gratuit Supabase
+const MAX_VIDEO_SECONDS = 10 * 60;
+
+function getVideoDuration(file){
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.onloadedmetadata = () => { URL.revokeObjectURL(video.src); resolve(video.duration || 0); };
+    video.onerror = () => resolve(0);
+    video.src = URL.createObjectURL(file);
+  });
+}
+
+async function uploadMediaFile(file){
+  const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+  const path = `${Date.now()}-${Math.random().toString(36).slice(2,8)}-${safeName}`;
+  const { error } = await sb.storage.from('media').upload(path, file);
+  if(error) throw error;
+  const { data } = sb.storage.from('media').getPublicUrl(path);
+  return data.publicUrl;
+}
+
+document.getElementById('addBtn').addEventListener('click', async () => {
+  const word = document.getElementById('wordInput').value.trim();
+  const def = document.getElementById('defInput').value.trim();
+  const lang = document.getElementById('langInput').value.trim();
+  const example = document.getElementById('exampleInput').value.trim();
+  const origin = document.getElementById('originInput').value.trim();
+  const uploaderTag = document.getElementById('tagInput').value.trim();
+  const imageFiles = Array.from(document.getElementById('imageInput').files || []);
+  const videoFiles = Array.from(document.getElementById('videoInput').files || []);
+  const msg = document.getElementById('formMsg');
+
+  if(!word || !def){
+    msg.style.color = 'var(--danger)'; msg.textContent = t('errWordDef'); return;
+  }
+  if(imageFiles.length > 5){
+    msg.style.color = 'var(--danger)'; msg.textContent = t('errTooManyImages'); return;
+  }
+  if(videoFiles.length > 2){
+    msg.style.color = 'var(--danger)'; msg.textContent = t('errTooManyVideos'); return;
+  }
+  for(const f of [...imageFiles, ...videoFiles]){
+    if(f.size > MAX_FILE_BYTES){
+      msg.style.color = 'var(--danger)'; msg.textContent = `${t('errFileTooBig')} ${f.name}`; return;
+    }
+  }
+  for(const f of videoFiles){
+    const duration = await getVideoDuration(f);
+    if(duration > MAX_VIDEO_SECONDS){
+      msg.style.color = 'var(--danger)'; msg.textContent = `${t('errVideoTooLong')} ${f.name}`; return;
+    }
+  }
+
+  msg.style.color = 'var(--ink-dim)';
+  msg.textContent = t('uploadingMedia');
+
+  try{
+    const imageUrls = [];
+    for(const f of imageFiles) imageUrls.push(await uploadMediaFile(f));
+    const videoUrls = [];
+    for(const f of videoFiles) videoUrls.push(await uploadMediaFile(f));
+
+    const { error } = await sb.from('words').insert({
+      word, definition: def, lang, example, origin, status: 'pending',
+      uploader_tag: uploaderTag || null,
+      image_urls: imageUrls.length ? imageUrls : null,
+      video_urls: videoUrls.length ? videoUrls : null
+    });
+    if(error) throw error;
+    msg.style.color = 'var(--source)';
+    msg.textContent = `« ${word} » ${t('okSubmit')}`;
+    document.getElementById('wordInput').value = '';
+    document.getElementById('langInput').value = '';
+    document.getElementById('defInput').value = '';
+    document.getElementById('exampleInput').value = '';
+    document.getElementById('originInput').value = '';
+    document.getElementById('tagInput').value = '';
+    document.getElementById('imageInput').value = '';
+    document.getElementById('videoInput').value = '';
+  }catch(e){
+    msg.style.color = 'var(--danger)'; msg.textContent = t('errSubmit');
+  }
+});
+
+/* ---------- Admin : connexion via Supabase Auth ---------- */
+document.getElementById('pinBtn').addEventListener('click', async () => {
+  const email = document.getElementById('emailInput').value.trim();
+  const password = document.getElementById('pinInput').value;
+  const pinMsg = document.getElementById('pinMsg');
+  pinMsg.style.color = 'var(--ink-dim)';
+  pinMsg.textContent = t('loading');
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if(error){
+    pinMsg.style.color = 'var(--danger)';
+    pinMsg.textContent = t('pinError');
+    return;
+  }
+  isAdmin = true;
+  pinMsg.textContent = '';
+  document.getElementById('adminGate').style.display = 'none';
+  document.getElementById('adminPanel').style.display = 'block';
+  renderPending();
+});
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await sb.auth.signOut();
+  isAdmin = false;
+  document.getElementById('adminGate').style.display = 'block';
+  document.getElementById('adminPanel').style.display = 'none';
+  document.getElementById('pinInput').value = '';
+});
+
+/* Restaure la session admin si déjà connecté (persistance du navigateur) */
+async function restoreAdminSession(){
+  const { data } = await sb.auth.getSession();
+  if(data && data.session){
+    isAdmin = true;
+    document.getElementById('adminGate').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'block';
+  }
+}
+
+/* ---------- Admin : propositions en attente ---------- */
+async function renderPending(){
+  const container = document.getElementById('pendingList');
+  const { data, error } = await sb
+    .from('words')
+    .select('*')
+    .eq('status', 'pending')
+    .order('submitted_at', { ascending: true });
+  if(error){ console.error(error); container.innerHTML = '<p class="hint">' + t('pendingEmpty') + '</p>'; return; }
+  const items = data || [];
+  if(items.length === 0){
+    container.innerHTML = '<p class="hint">' + t('pendingEmpty') + '</p>';
+    return;
+  }
+
+  container.innerHTML = items.map(it => `
+    <div class="pending-item" data-id="${escapeAttr(it.id)}">
+      <div class="headword" style="font-size:1.15rem;">${escapeHtml(it.word)}</div>
+      <p class="definition" style="margin-top:6px;">${escapeHtml(it.definition)}</p>
+      ${it.example ? `<div class="meta-line"><strong>${t('exampleLabel')}</strong>${escapeHtml(it.example)}</div>` : ''}
+      ${it.origin ? `<div class="meta-line"><strong>${t('originLabel')}</strong>${escapeHtml(it.origin)}</div>` : ''}
+      ${it.lang ? `<div class="meta-line"><strong>${t('labelLang')}</strong>${escapeHtml(it.lang)}</div>` : ''}
+      ${it.uploader_tag ? `<div class="meta-line"><strong>${t('uploadedBy')}</strong>${escapeHtml(it.uploader_tag)}</div>` : ''}
+      ${Array.isArray(it.image_urls) && it.image_urls.length ? `<div class="media-gallery">${it.image_urls.map(u => `<img src="${escapeAttr(u)}" alt="">`).join('')}</div>` : ''}
+      ${Array.isArray(it.video_urls) && it.video_urls.length ? `<div class="media-videos">${it.video_urls.map(u => `<video controls preload="metadata" src="${escapeAttr(u)}"></video>`).join('')}</div>` : ''}
+      <div class="translate-editor" style="display:none;margin-top:14px;"></div>
+      <div class="pending-actions">
+        <button class="btn translate-btn">${t('translateBtn')}</button>
+        <button class="btn danger reject-btn">${t('rejectBtn')}</button>
+      </div>
+    </div>
+  `).join('');
+
+  container.querySelectorAll('.pending-item').forEach(itemEl => {
+    const id = itemEl.dataset.id;
+    itemEl.querySelector('.translate-btn').addEventListener('click', () => openTranslateEditor(itemEl, id, items.find(x => x.id === id)));
+    itemEl.querySelector('.reject-btn').addEventListener('click', () => rejectPending(id));
+  });
+}
+
+/* ---------- Traduction automatique via MyMemory (gratuit, sans clé) ---------- */
+async function translateText(text, targetLang){
+  if(!text || !text.trim()) return '';
+  try{
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=autodetect|${targetLang}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return (data && data.responseData && data.responseData.translatedText) ? data.responseData.translatedText : text;
+  }catch(e){
+    return text; // en cas d'échec réseau, on retombe sur le texte original (modifiable à la main)
+  }
+}
+
+async function openTranslateEditor(itemEl, id, entry){
+  const editor = itemEl.querySelector('.translate-editor');
+  const btn = itemEl.querySelector('.translate-btn');
+  btn.disabled = true;
+  btn.textContent = t('translating');
+
+  const [wordFr, wordEn, defFr, defEn, exFr, exEn, origFr, origEn] = await Promise.all([
+    translateText(entry.word, 'fr'), translateText(entry.word, 'en'),
+    translateText(entry.definition, 'fr'), translateText(entry.definition, 'en'),
+    translateText(entry.example, 'fr'), translateText(entry.example, 'en'),
+    translateText(entry.origin, 'fr'), translateText(entry.origin, 'en')
+  ]);
+
+  editor.innerHTML = `
+    <div class="field-row">
+      <div class="field">
+        <label>🇫🇷 ${t('labelWord')}</label>
+        <input type="text" class="ed-word-fr" value="${escapeAttr(wordFr)}">
+      </div>
+      <div class="field">
+        <label>🇬🇧 ${t('labelWord')}</label>
+        <input type="text" class="ed-word-en" value="${escapeAttr(wordEn)}">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>🇫🇷 ${t('labelDef')}</label>
+        <textarea class="ed-def-fr" rows="2">${escapeHtml(defFr)}</textarea>
+      </div>
+      <div class="field">
+        <label>🇬🇧 ${t('labelDef')}</label>
+        <textarea class="ed-def-en" rows="2">${escapeHtml(defEn)}</textarea>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>🇫🇷 ${t('labelExample')}</label>
+        <input type="text" class="ed-ex-fr" value="${escapeAttr(exFr)}">
+      </div>
+      <div class="field">
+        <label>🇬🇧 ${t('labelExample')}</label>
+        <input type="text" class="ed-ex-en" value="${escapeAttr(exEn)}">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>🇫🇷 ${t('labelOrigin')}</label>
+        <input type="text" class="ed-orig-fr" value="${escapeAttr(origFr)}">
+      </div>
+      <div class="field">
+        <label>🇬🇧 ${t('labelOrigin')}</label>
+        <input type="text" class="ed-orig-en" value="${escapeAttr(origEn)}">
+      </div>
+    </div>
+    <button class="btn publish-btn">${t('publishBtn')}</button>
+    <span class="form-msg translate-msg" style="margin-left:10px;"></span>
+  `;
+  editor.style.display = 'block';
+  btn.style.display = 'none';
+
+  editor.querySelector('.publish-btn').addEventListener('click', async () => {
+    const payload = {
+      status: 'approved',
+      approved_at: new Date().toISOString(),
+      word_fr: editor.querySelector('.ed-word-fr').value.trim(),
+      word_en: editor.querySelector('.ed-word-en').value.trim(),
+      definition_fr: editor.querySelector('.ed-def-fr').value.trim(),
+      definition_en: editor.querySelector('.ed-def-en').value.trim(),
+      example_fr: editor.querySelector('.ed-ex-fr').value.trim(),
+      example_en: editor.querySelector('.ed-ex-en').value.trim(),
+      origin_fr: editor.querySelector('.ed-orig-fr').value.trim(),
+      origin_en: editor.querySelector('.ed-orig-en').value.trim()
+    };
+    const { error } = await sb.from('words').update(payload).eq('id', id);
+    const msg = editor.querySelector('.translate-msg');
+    if(error){
+      msg.style.color = 'var(--danger)';
+      msg.textContent = t('errSubmit');
+      return;
+    }
+    await renderPending();
+    await loadApproved();
+  });
+}
+
+async function rejectPending(id){
+  await sb.from('words').delete().eq('id', id);
+  await renderPending();
+}
+
+/* ---------- Admin : notes de référence ---------- */
+document.getElementById('addRefBtn').addEventListener('click', async () => {
+  const word = document.getElementById('refWordInput').value.trim();
+  const note = document.getElementById('refNoteInput').value.trim();
+  const msg = document.getElementById('refMsg');
+  if(!word || !note){ msg.style.color = 'var(--danger)'; msg.textContent = t('errWordNote'); return; }
+  try{
+    const { error } = await sb.from('reference_notes').insert({ word, note });
+    if(error) throw error;
+    msg.style.color = 'var(--source)'; msg.textContent = t('okRefPublish');
+    document.getElementById('refWordInput').value = '';
+    document.getElementById('refNoteInput').value = '';
+    await loadReference();
+  }catch(e){
+    msg.style.color = 'var(--danger)'; msg.textContent = t('errRefPublish');
+  }
+});
+
+/* ---------- Page Référence ---------- */
+async function loadReference(){
+  const container = document.getElementById('refEntries');
+  const { data, error } = await sb
+    .from('reference_notes')
+    .select('*')
+    .order('word', { ascending: true });
+
+  let items;
+  if(error){
+    items = readOfflineCache(OFFLINE_REF_KEY);
+  } else {
+    items = data || [];
+    writeOfflineCache(OFFLINE_REF_KEY, items);
+  }
+
+  if(items.length === 0){
+    container.innerHTML = '<div class="empty">' + t('refEmpty') + '</div>';
+    return;
+  }
+  container.innerHTML = items.map(it => `
+    <div class="ref-entry">
+      <div class="ref-word">${escapeHtml(it.word)}</div>
+      <p class="ref-note">${escapeHtml(it.note)}</p>
+    </div>
+  `).join('');
+}
+
+/* ---------- Utilitaires ---------- */
+function speak(text, lang){
+  if(!('speechSynthesis' in window)){ alert("Audio unavailable / Audio indisponible."); return; }
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  if(lang) utter.lang = guessLangCode(lang);
+  window.speechSynthesis.speak(utter);
+}
+function guessLangCode(lang){
+  const l = lang.toLowerCase();
+  const map = {
+    'fr':'fr-FR','en':'en-US',
+    'français':'fr-FR','francais':'fr-FR','anglais':'en-US','english':'en-US',
+    'espagnol':'es-ES','arabe':'ar-SA','allemand':'de-DE','italien':'it-IT','portugais':'pt-PT'
+  };
+  return map[l] || (currentLang === 'fr' ? 'fr-FR' : 'en-US');
+}
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeAttr(s){ return escapeHtml(s); }
+
+/* ---------- Init ---------- */
+applyTheme();
+applyLanguage();
+loadApproved();
+loadReference();
+restoreAdminSession();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch((e) => console.warn('SW registration failed', e));
+  });
+}
+window.addEventListener('online', loadApproved);
+</script>
+</body>
+</html>

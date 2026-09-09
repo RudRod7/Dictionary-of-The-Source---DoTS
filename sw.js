@@ -4,7 +4,7 @@
 // via localStorage dans index.html, car elles viennent de Supabase et
 // changent plus souvent que les fichiers de l'application.
 
-const CACHE_NAME = 'dots-shell-v5';
+const CACHE_NAME = 'dots-shell-v6';
 const SHELL_FILES = [
   './',
   './index.html',
@@ -63,5 +63,5 @@ self.addEventListener('fetch', (event) => {
         });
     })
  
-  );
+                                 );
 });

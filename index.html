@@ -77,6 +77,8 @@
   h1 em{font-style:italic;color:var(--source);}
   .tagline{color:var(--ink-dim);font-size:1.05rem;max-width:460px;margin:0 auto;}
   .motto{color:var(--gold);font-size:0.92rem;font-style:italic;max-width:460px;margin:12px auto 0;line-height:1.5;}
+  .visit-counter{font-family:'Space Mono',monospace;font-size:0.72rem;letter-spacing:0.05em;color:var(--ink-dim);margin-top:14px;text-transform:uppercase;}
+  .paywall-notice{font-family:'Space Mono',monospace;font-size:0.68rem;letter-spacing:0.04em;color:var(--danger);margin-top:6px;}
 
   /* Nav tabs */
   nav{display:flex;justify-content:center;gap:6px;margin:28px 0 34px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
@@ -125,6 +127,8 @@
   .entry-body{flex:1;}
   .entry-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
   .headword{font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:1.6rem;color:var(--ink);}
+  .headword-link{cursor:pointer;}
+  .headword-link:hover{color:var(--source);text-decoration:underline;}
   .speak-btn{border:none;background:none;color:var(--gold);font-family:'Space Mono',monospace;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;padding:2px 0;cursor:pointer;}
   .speak-btn:hover{color:var(--source);}
   .definition{margin:8px 0 0;font-size:1.08rem;line-height:1.55;}
@@ -183,6 +187,8 @@
     <p class="tagline" data-i18n="tagline">Un dictionnaire vivant, nourri chaque jour, gratuit et ouvert à tous.</p>
     <p class="motto" data-i18n="motto">Chaque mot est un point. Chaque connaissance est une lumière. Chaque point peut nous rapprocher de la Source Divine Créatrice du Tout.</p>
     <p id="syncStatus" style="font-family:'Space Mono',monospace;font-size:0.68rem;letter-spacing:0.05em;color:var(--ink-dim);margin-top:10px;text-transform:uppercase;"></p>
+    <p id="visitCounter" class="visit-counter"></p>
+    <p id="paywallNotice" class="paywall-notice" data-i18n="paywallNotice">L'accès au site sera rendu payant à partir du 4 janvier 2027.</p>
   </header>
 
   <nav>
@@ -446,6 +452,9 @@ const I18N = {
   fr: {
     tagline: "Un dictionnaire vivant, nourri chaque jour, gratuit et ouvert à tous.",
     motto: "Chaque mot est un point. Chaque connaissance est une lumière. Chaque point peut nous rapprocher de la Source Divine Créatrice du Tout.",
+    visitsLabel: "visites depuis le lancement",
+    paywallNotice: "L'accès au site sera rendu payant à partir du 4 janvier 2027.",
+    backToList: "Retour à la liste",
     themeDark: "Sombre", themeLight: "Clair",
     navHome: "Accueil", navPreface: "Préface", navReference: "Référence", navAdmin: "Administration",
     proposeTitle: "Proposer une entrée",
@@ -511,6 +520,9 @@ const I18N = {
   en: {
     tagline: "A living dictionary, nourished daily, free and open to all.",
     motto: "Every word is a dot. Every piece of knowledge is a light. Every dot can bring us closer to the Divine Source, Creator of All.",
+    visitsLabel: "visits since launch",
+    paywallNotice: "Access to the site will become paid starting January 4, 2027.",
+    backToList: "Back to the list",
     themeDark: "Dark", themeLight: "Light",
     navHome: "Home", navPreface: "Preface", navReference: "Reference", navAdmin: "Admin",
     proposeTitle: "Suggest an entry",
@@ -584,6 +596,7 @@ function applyLanguage(){
   renderPreface();
   renderEntries(document.getElementById('searchInput').value);
   loadReference();
+  renderVisitCounter();
   if(isAdmin){ renderPending(); renderManageList(document.getElementById('manageSearch').value); }
 }
 
@@ -729,9 +742,24 @@ function localizedField(e, base){
   return (val && val.trim()) ? val : e[base];
 }
 
+let focusedWordId = null;
+
 function renderEntries(filter){
   const container = document.getElementById('entries');
   const countLine = document.getElementById('countLine');
+
+  if(focusedWordId){
+    const e = approvedEntries.find(x => x.id === focusedWordId);
+    if(!e){ focusedWordId = null; }
+    else{
+      countLine.textContent = '';
+      container.innerHTML = `<button class="btn back-to-list-btn" style="margin-bottom:18px;">← ${t('backToList')}</button>` + entryHtml(e, null);
+      container.querySelector('.back-to-list-btn').addEventListener('click', () => { focusedWordId = null; renderEntries(document.getElementById('searchInput').value); });
+      attachEntryHandlers(container);
+      return;
+    }
+  }
+
   const q = (filter || '').trim().toLowerCase();
   const list = q ? approvedEntries.filter(e => (localizedField(e,'word')||'').toLowerCase().includes(q)) : approvedEntries;
 
@@ -744,28 +772,32 @@ function renderEntries(filter){
     return;
   }
 
-  container.innerHTML = list.map((e, i) => {
-    const word = localizedField(e, 'word');
-    const definition = localizedField(e, 'definition');
-    const example = localizedField(e, 'example');
-    const origin = localizedField(e, 'origin');
-    const images = Array.isArray(e.image_urls) ? e.image_urls : [];
-    const videos = Array.isArray(e.video_urls) ? e.video_urls : [];
-    const imagesHtml = images.length ? `
-      <div class="media-gallery">
-        ${images.map(url => `<img src="${escapeAttr(url)}" alt="${escapeAttr(word)}" loading="lazy">`).join('')}
-      </div>` : '';
-    const videosHtml = videos.length ? `
-      <div class="media-videos">
-        ${videos.map(url => `<video controls preload="metadata" src="${escapeAttr(url)}"></video>`).join('')}
-        ${e.uploader_tag ? `<div class="uploader-credit">${t('uploadedBy')} <strong>${escapeHtml(e.uploader_tag)}</strong></div>` : ''}
-      </div>` : '';
-    return `
-    <div class="entry">
-      <div class="entry-index">${String(i+1).padStart(2,'0')}</div>
+  container.innerHTML = list.map((e, i) => entryHtml(e, i)).join('');
+  attachEntryHandlers(container);
+}
+
+function entryHtml(e, i){
+  const word = localizedField(e, 'word');
+  const definition = localizedField(e, 'definition');
+  const example = localizedField(e, 'example');
+  const origin = localizedField(e, 'origin');
+  const images = Array.isArray(e.image_urls) ? e.image_urls : [];
+  const videos = Array.isArray(e.video_urls) ? e.video_urls : [];
+  const imagesHtml = images.length ? `
+    <div class="media-gallery">
+      ${images.map(url => `<img src="${escapeAttr(url)}" alt="${escapeAttr(word)}" loading="lazy">`).join('')}
+    </div>` : '';
+  const videosHtml = videos.length ? `
+    <div class="media-videos">
+      ${videos.map(url => `<video controls preload="metadata" src="${escapeAttr(url)}"></video>`).join('')}
+      ${e.uploader_tag ? `<div class="uploader-credit">${t('uploadedBy')} <strong>${escapeHtml(e.uploader_tag)}</strong></div>` : ''}
+    </div>` : '';
+  return `
+    <div class="entry" data-id="${escapeAttr(e.id)}">
+      <div class="entry-index">${i !== null ? String(i+1).padStart(2,'0') : ''}</div>
       <div class="entry-body">
         <div class="entry-head">
-          <span class="headword">${escapeHtml(word)}</span>
+          <span class="headword headword-link" role="button" tabindex="0">${escapeHtml(word)}</span>
           <button class="speak-btn" data-word="${escapeAttr(word)}" data-def="${escapeAttr(definition)}" data-lang="${currentLang}">${t('listenBtn')}</button>
         </div>
         <p class="definition">${escapeHtml(definition)}</p>
@@ -776,14 +808,25 @@ function renderEntries(filter){
       </div>
     </div>
   `;
-  }).join('');
+}
 
+function attachEntryHandlers(container){
   container.querySelectorAll('.speak-btn').forEach(btn => {
-    btn.addEventListener('click', () => speak(btn.dataset.word + '. ' + btn.dataset.def, btn.dataset.lang));
+    btn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      speak(btn.dataset.word + '. ' + btn.dataset.def, btn.dataset.lang);
+    });
+  });
+  container.querySelectorAll('.headword-link').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.closest('.entry').dataset.id;
+      focusedWordId = id;
+      renderEntries();
+    });
   });
 }
 
-document.getElementById('searchInput').addEventListener('input', (e) => renderEntries(e.target.value));
+document.getElementById('searchInput').addEventListener('input', (e) => { focusedWordId = null; renderEntries(e.target.value); });
 
 /* ---------- Soumission publique ---------- */
 /* ---------- Validation et envoi des médias vers Supabase Storage ---------- */
@@ -1376,12 +1419,38 @@ function guessLangCode(lang){
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function escapeAttr(s){ return escapeHtml(s); }
 
+/* ---------- Compteur de visites (table site_stats + fonction increment_visits côté Supabase) ---------- */
+let visitCount = null;
+const OFFLINE_VISITS_KEY = 'dots_offline_visits_v1';
+
+function renderVisitCounter(){
+  const el = document.getElementById('visitCounter');
+  if(!el) return;
+  if(visitCount === null){ el.textContent = ''; return; }
+  el.textContent = `👁 ${visitCount.toLocaleString(currentLang === 'fr' ? 'fr-FR' : 'en-US')} ${t('visitsLabel')}`;
+}
+
+async function registerVisit(){
+  try{
+    const { data, error } = await sb.rpc('increment_visits');
+    if(error) throw error;
+    visitCount = data;
+    localStorage.setItem(OFFLINE_VISITS_KEY, String(data));
+  }catch(e){
+    // Hors-ligne ou fonction indisponible : on affiche la dernière valeur connue, sans compter cette visite.
+    const cached = localStorage.getItem(OFFLINE_VISITS_KEY);
+    visitCount = cached ? Number(cached) : null;
+  }
+  renderVisitCounter();
+}
+
 /* ---------- Init ---------- */
 applyTheme();
 applyLanguage();
 loadApproved();
 loadReference();
 restoreAdminSession();
+registerVisit();
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', () => {

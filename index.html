@@ -131,8 +131,11 @@
   .headword-link:hover{color:var(--source);text-decoration:underline;}
   .speak-btn{border:none;background:none;color:var(--gold);font-family:'Space Mono',monospace;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;padding:2px 0;cursor:pointer;}
   .speak-btn:hover{color:var(--source);}
-  .definition{margin:8px 0 0;font-size:1.08rem;line-height:1.55;}
-  .meta-line{margin-top:10px;font-size:0.85rem;color:var(--ink-dim);font-style:italic;}
+  .definition{margin:8px 0 0;font-size:1.08rem;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;}
+  .meta-line{margin-top:10px;font-size:0.85rem;color:var(--ink-dim);font-style:italic;white-space:pre-wrap;overflow-wrap:anywhere;}
+  .media-notice{margin-top:10px;font-family:'Space Mono',monospace;font-size:0.72rem;letter-spacing:0.03em;color:var(--gold);line-height:1.6;}
+  .media-notice .notice-credit{display:block;color:var(--gold);text-transform:uppercase;}
+  .ref-note{white-space:pre-wrap;overflow-wrap:anywhere;}
   .meta-line strong{font-style:normal;color:var(--gold);font-family:'Space Mono',monospace;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;margin-right:6px;}
   .media-gallery{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
   .media-gallery img{width:84px;height:84px;object-fit:cover;border-radius:4px;border:1px solid var(--line);}
@@ -346,6 +349,29 @@
         <button class="btn" id="addRefBtn" data-i18n="refPublishBtn">Publier la note</button>
         <div class="form-msg" id="refMsg"></div>
       </div>
+
+      <div class="well">
+        <h2 data-i18n="refManageTitle">Notes de référence publiées</h2>
+        <div id="refManageList"><p class="hint" data-i18n="loading">Chargement...</p></div>
+      </div>
+
+      <div class="well">
+        <h2 data-i18n="prefaceEditTitle">Modifier la préface</h2>
+        <p class="hint" data-i18n="prefaceEditHint">Le texte s'affiche tel que tu l'écris (paragraphes et retours à la ligne conservés). Laisse un champ vide pour revenir au texte d'origine.</p>
+        <div class="field">
+          <label>🇫🇷 Français</label>
+          <textarea id="prefaceEditFr" rows="14"></textarea>
+        </div>
+        <div class="field">
+          <label>🇬🇧 English</label>
+          <textarea id="prefaceEditEn" rows="14"></textarea>
+        </div>
+        <div class="pending-actions">
+          <button class="btn" id="prefaceSaveBtn" data-i18n="prefaceSaveBtn">Enregistrer la préface</button>
+          <button class="btn danger" id="prefaceResetBtn" data-i18n="prefaceResetBtn">Restaurer le texte d'origine</button>
+        </div>
+        <div class="form-msg" id="prefaceMsg"></div>
+      </div>
     </div>
   </section>
 
@@ -457,6 +483,16 @@ const I18N = {
     visitsLabel: "visites depuis le lancement",
     paywallNotice: "L'accès au site sera rendu payant à partir du 4 janvier 2027.",
     backToList: "Retour à la liste",
+    prefaceEditTitle: "Modifier la préface",
+    prefaceEditHint: "Le texte s'affiche tel que tu l'écris (paragraphes et retours à la ligne conservés). Laisse un champ vide pour revenir au texte d'origine.",
+    prefaceSaveBtn: "Enregistrer la préface", prefaceResetBtn: "Restaurer le texte d'origine",
+    prefaceSaved: "Préface enregistrée.", prefaceResetDone: "Texte d'origine restauré.",
+    confirmPrefaceReset: "Restaurer le texte d'origine de la préface ? Tes modifications seront perdues.",
+    mediaAttached: "Médias associés :", mediaClickHint: "touche le mot pour les voir.",
+    imageOne: "image", imagesMany: "images", videoOne: "vidéo", videosMany: "vidéos",
+    refManageTitle: "Notes de référence publiées",
+    confirmDeleteRef: "Supprimer définitivement cette note de référence ?",
+    errRefDelete: "Suppression impossible : vérifie les règles Supabase (voir les instructions).",
     themeDark: "Sombre", themeLight: "Clair",
     navHome: "Accueil", navPreface: "Préface", navReference: "Référence", navAdmin: "Administration",
     proposeTitle: "Proposer une entrée",
@@ -525,6 +561,16 @@ const I18N = {
     visitsLabel: "visits since launch",
     paywallNotice: "Access to the site will become paid starting January 4, 2027.",
     backToList: "Back to the list",
+    prefaceEditTitle: "Edit the preface",
+    prefaceEditHint: "The text is displayed exactly as you write it (paragraphs and line breaks preserved). Leave a field empty to go back to the original text.",
+    prefaceSaveBtn: "Save the preface", prefaceResetBtn: "Restore original text",
+    prefaceSaved: "Preface saved.", prefaceResetDone: "Original text restored.",
+    confirmPrefaceReset: "Restore the original preface text? Your changes will be lost.",
+    mediaAttached: "Attached media:", mediaClickHint: "tap the word to view them.",
+    imageOne: "image", imagesMany: "images", videoOne: "video", videosMany: "videos",
+    refManageTitle: "Published reference notes",
+    confirmDeleteRef: "Permanently delete this reference note?",
+    errRefDelete: "Deletion failed: check the Supabase rules (see instructions).",
     themeDark: "Dark", themeLight: "Light",
     navHome: "Home", navPreface: "Preface", navReference: "Reference", navAdmin: "Admin",
     proposeTitle: "Suggest an entry",
@@ -599,7 +645,7 @@ function applyLanguage(){
   renderEntries(document.getElementById('searchInput').value);
   loadReference();
   renderVisitCounter();
-  if(isAdmin){ renderPending(); renderManageList(document.getElementById('manageSearch').value); }
+  if(isAdmin){ renderPending(); renderManageList(document.getElementById('manageSearch').value); loadRefManage(); }
 }
 
 document.getElementById('langBtn').addEventListener('click', () => {
@@ -677,15 +723,94 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 /* ---------- Préface ---------- */
+/* Texte modifiable depuis l'admin (table site_content, clé « preface »).
+   Si un champ est vide, on retombe sur le texte d'origine écrit dans le code. */
+const OFFLINE_PREFACE_KEY = 'dots_offline_preface_v1';
+let prefaceOverride = { fr: '', en: '' };
+
+function currentPrefaceText(lang){
+  const o = prefaceOverride[lang];
+  return (o && o.trim()) ? o : (lang === 'fr' ? PREFACE_TEXT_FR : PREFACE_TEXT_EN);
+}
+
 function renderPreface(){
   const el = document.getElementById('prefaceContent');
-  const text = currentLang === 'fr' ? PREFACE_TEXT_FR : PREFACE_TEXT_EN;
+  const text = currentPrefaceText(currentLang);
   if(text && text.trim().length > 0){
     el.innerHTML = '<p class="preface-text">' + escapeHtml(text) + '</p>';
   } else {
     el.innerHTML = '<p class="preface-text placeholder">' + escapeHtml(t('prefaceEmpty')) + '</p>';
   }
 }
+
+async function loadPreface(){
+  try{
+    const { data, error } = await sb.from('site_content').select('content_fr, content_en').eq('key', 'preface').maybeSingle();
+    if(error) throw error;
+    prefaceOverride = { fr: (data && data.content_fr) || '', en: (data && data.content_en) || '' };
+    try{ localStorage.setItem(OFFLINE_PREFACE_KEY, JSON.stringify(prefaceOverride)); }catch(e){}
+  }catch(e){
+    // Hors-ligne (ou table pas encore créée) : dernière copie enregistrée, sinon texte d'origine du code.
+    try{
+      const raw = localStorage.getItem(OFFLINE_PREFACE_KEY);
+      if(raw) prefaceOverride = JSON.parse(raw);
+    }catch(_){}
+  }
+  renderPreface();
+  fillPrefaceEditor();
+}
+
+/* ---------- Admin : éditeur de la préface ---------- */
+function fillPrefaceEditor(force){
+  const fr = document.getElementById('prefaceEditFr');
+  const en = document.getElementById('prefaceEditEn');
+  if(!fr || !en) return;
+  // On n'écrase pas un texte en cours de saisie.
+  if(!force && (fr.dataset.dirty === '1' || en.dataset.dirty === '1')) return;
+  fr.value = currentPrefaceText('fr');
+  en.value = currentPrefaceText('en');
+  fr.dataset.dirty = '0';
+  en.dataset.dirty = '0';
+}
+
+async function savePreface(frText, enText, okKey){
+  const msg = document.getElementById('prefaceMsg');
+  msg.style.color = 'var(--ink-dim)';
+  msg.textContent = t('loading');
+  const { error } = await sb.from('site_content').upsert(
+    { key: 'preface', content_fr: frText, content_en: enText, updated_at: new Date().toISOString() },
+    { onConflict: 'key' }
+  );
+  if(error){
+    console.error('Erreur Supabase (préface):', error);
+    msg.style.color = 'var(--danger)';
+    msg.textContent = `${t('errSubmit')} [${error.message || error.code || '?'}]`;
+    return false;
+  }
+  prefaceOverride = { fr: frText, en: enText };
+  try{ localStorage.setItem(OFFLINE_PREFACE_KEY, JSON.stringify(prefaceOverride)); }catch(e){}
+  renderPreface();
+  msg.style.color = 'var(--source)';
+  msg.textContent = t(okKey);
+  return true;
+}
+
+document.getElementById('prefaceSaveBtn').addEventListener('click', async () => {
+  const fr = document.getElementById('prefaceEditFr');
+  const en = document.getElementById('prefaceEditEn');
+  const ok = await savePreface(fr.value.trim(), en.value.trim(), 'prefaceSaved');
+  if(ok){ fr.dataset.dirty = '0'; en.dataset.dirty = '0'; }
+});
+
+document.getElementById('prefaceResetBtn').addEventListener('click', async () => {
+  if(!confirm(t('confirmPrefaceReset'))) return;
+  const ok = await savePreface('', '', 'prefaceResetDone');
+  if(ok) fillPrefaceEditor(true);
+});
+
+['prefaceEditFr', 'prefaceEditEn'].forEach(id => {
+  document.getElementById(id).addEventListener('input', (e) => { e.target.dataset.dirty = '1'; });
+});
 
 /* ---------- Dictionnaire public ---------- */
 const OFFLINE_WORDS_KEY = 'dots_offline_words_v1';
@@ -778,33 +903,50 @@ function renderEntries(filter){
   attachEntryHandlers(container);
 }
 
+/* Texte de notification « médias associés » (liste principale + gestion admin) */
+function mediaNoticeHtml(e){
+  const nImg = Array.isArray(e.image_urls) ? e.image_urls.length : 0;
+  const nVid = Array.isArray(e.video_urls) ? e.video_urls.length : 0;
+  if(!nImg && !nVid) return '';
+  const parts = [];
+  if(nImg) parts.push(`${nImg} ${nImg > 1 ? t('imagesMany') : t('imageOne')}`);
+  if(nVid) parts.push(`${nVid} ${nVid > 1 ? t('videosMany') : t('videoOne')}`);
+  const credit = (nVid && e.uploader_tag)
+    ? `<span class="notice-credit">${t('uploadedBy')} <strong>${escapeHtml(e.uploader_tag)}</strong></span>` : '';
+  return `<div class="media-notice">📎 ${t('mediaAttached')} ${parts.join(', ')} — ${t('mediaClickHint')}${credit}</div>`;
+}
+
 function entryHtml(e, i){
   const word = localizedField(e, 'word');
   const definition = localizedField(e, 'definition');
   const example = localizedField(e, 'example');
   const origin = localizedField(e, 'origin');
+  const isFocused = (i === null);
   const images = Array.isArray(e.image_urls) ? e.image_urls : [];
   const videos = Array.isArray(e.video_urls) ? e.video_urls : [];
-  const imagesHtml = images.length ? `
+  // Fiche d'un mot : médias complets. Liste principale : simple mention sous les exemples.
+  const imagesHtml = (isFocused && images.length) ? `
     <div class="media-gallery">
       ${images.map(url => `<img src="${escapeAttr(url)}" alt="${escapeAttr(word)}" loading="lazy">`).join('')}
     </div>` : '';
-  const videosHtml = videos.length ? `
+  const videosHtml = (isFocused && videos.length) ? `
     <div class="media-videos">
       ${videos.map(url => `<video controls preload="metadata" src="${escapeAttr(url)}"></video>`).join('')}
       ${e.uploader_tag ? `<div class="uploader-credit">${t('uploadedBy')} <strong>${escapeHtml(e.uploader_tag)}</strong></div>` : ''}
     </div>` : '';
+  const noticeHtml = isFocused ? '' : mediaNoticeHtml(e);
   return `
     <div class="entry" data-id="${escapeAttr(e.id)}">
       <div class="entry-index">${i !== null ? String(i+1).padStart(2,'0') : ''}</div>
       <div class="entry-body">
         <div class="entry-head">
           <span class="headword headword-link" role="button" tabindex="0">${escapeHtml(word)}</span>
-          <button class="speak-btn" data-word="${escapeAttr(word)}" data-def="${escapeAttr(definition)}" data-lang="${currentLang}">${t('listenBtn')}</button>
+          <button class="speak-btn" data-word="${escapeAttr(word)}" data-def="${escapeAttr(definition)}" data-ex="${escapeAttr(example || '')}" data-lang="${currentLang}">${t('listenBtn')}</button>
         </div>
         <p class="definition">${escapeHtml(definition)}</p>
         ${example ? `<div class="meta-line"><strong>${t('exampleLabel')}</strong>${escapeHtml(example)}</div>` : ''}
         ${origin ? `<div class="meta-line"><strong>${t('originLabel')}</strong>${escapeHtml(origin)}</div>` : ''}
+        ${noticeHtml}
         ${imagesHtml}
         ${videosHtml}
       </div>
@@ -816,7 +958,8 @@ function attachEntryHandlers(container){
   container.querySelectorAll('.speak-btn').forEach(btn => {
     btn.addEventListener('click', (ev) => {
       ev.stopPropagation();
-      speak(btn.dataset.word + '. ' + btn.dataset.def, btn.dataset.lang);
+      const ex = btn.dataset.ex;
+      speak([btn.dataset.word, btn.dataset.def, ex ? (t('exampleLabel') + '. ' + ex) : ''], btn.dataset.lang);
     });
   });
   container.querySelectorAll('.headword-link').forEach(el => {
@@ -887,32 +1030,11 @@ document.getElementById('addBtn').addEventListener('click', async () => {
   if(!word || !def){
     msg.style.color = 'var(--danger)'; msg.textContent = t('errWordDef'); return;
   }
-  if(imageFiles.length > 5){
-    msg.style.color = 'var(--danger)'; msg.textContent = t('errTooManyImages'); return;
-  }
-  if(videoFiles.length > 2){
-    msg.style.color = 'var(--danger)'; msg.textContent = t('errTooManyVideos'); return;
-  }
-  for(const f of [...imageFiles, ...videoFiles]){
-    if(f.size > MAX_FILE_BYTES){
-      msg.style.color = 'var(--danger)'; msg.textContent = `${t('errFileTooBig')} ${f.name}`; return;
-    }
-  }
-  for(const f of videoFiles){
-    const duration = await getVideoDuration(f);
-    if(duration > MAX_VIDEO_SECONDS){
-      msg.style.color = 'var(--danger)'; msg.textContent = `${t('errVideoTooLong')} ${f.name}`; return;
-    }
-  }
-
   msg.style.color = 'var(--ink-dim)';
   msg.textContent = t('uploadingMedia');
 
   try{
-    const imageUrls = [];
-    for(const f of imageFiles) imageUrls.push(await uploadMediaFile(f));
-    const videoUrls = [];
-    for(const f of videoFiles) videoUrls.push(await uploadMediaFile(f));
+    const { imageUrls, videoUrls } = await validateAndUploadMedia(imageFiles, videoFiles, 0, 0);
 
     const { error } = await sb.from('words').insert({
       word, definition: def, lang, example, origin, status: 'pending',
@@ -932,7 +1054,9 @@ document.getElementById('addBtn').addEventListener('click', async () => {
     document.getElementById('imageInput').value = '';
     document.getElementById('videoInput').value = '';
   }catch(e){
-    msg.style.color = 'var(--danger)'; msg.textContent = t('errSubmit');
+    console.error('Erreur envoi proposition:', e);
+    msg.style.color = 'var(--danger)';
+    msg.textContent = e && e.message ? `${t('errSubmit')} [${e.message}]` : t('errSubmit');
   }
 });
 
@@ -1019,6 +1143,13 @@ async function renderPending(){
 /* ---------- Traduction automatique via MyMemory (gratuit, sans clé) ---------- */
 async function translateText(text, targetLang){
   if(!text || !text.trim()) return text || '';
+  // Traduit ligne par ligne pour que paragraphes et retours à la ligne soient conservés.
+  const lines = text.split('\n');
+  const out = await Promise.all(lines.map(line => line.trim() ? translateLine(line, targetLang) : Promise.resolve(line)));
+  return out.join('\n');
+}
+
+async function translateLine(text, targetLang){
   try{
     const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=autodetect|${targetLang}`;
     const res = await fetch(url);
@@ -1139,6 +1270,8 @@ async function loadManageList(){
     .order('word', { ascending: true });
   manageEntries = error ? [] : (data || []);
   renderManageList();
+  loadRefManage();
+  fillPrefaceEditor();
 }
 
 function renderManageList(filter){
@@ -1155,6 +1288,8 @@ function renderManageList(filter){
     <div class="pending-item" data-id="${escapeAttr(e.id)}">
       <div class="headword" style="font-size:1.1rem;">${escapeHtml(e.word)}</div>
       <p class="definition" style="margin-top:6px;font-size:0.95rem;">${escapeHtml(e.definition)}</p>
+      ${e.example ? `<div class="meta-line"><strong>${t('exampleLabel')}</strong>${escapeHtml(e.example)}</div>` : ''}
+      ${mediaNoticeHtml(e)}
       <div class="manage-editor" style="display:none;margin-top:14px;"></div>
       <div class="pending-actions">
         <button class="btn manage-edit-btn">${t('editBtn')}</button>
@@ -1368,10 +1503,48 @@ document.getElementById('addRefBtn').addEventListener('click', async () => {
     document.getElementById('refWordInput').value = '';
     document.getElementById('refNoteInput').value = '';
     await loadReference();
+    await loadRefManage();
   }catch(e){
     msg.style.color = 'var(--danger)'; msg.textContent = t('errRefPublish');
   }
 });
+
+/* ---------- Admin : gestion des notes de référence (liste + suppression) ---------- */
+async function loadRefManage(){
+  const container = document.getElementById('refManageList');
+  if(!container) return;
+  const { data, error } = await sb.from('reference_notes').select('*').order('word', { ascending: true });
+  const items = error ? [] : (data || []);
+  if(items.length === 0){
+    container.innerHTML = '<p class="hint">' + t('refEmpty') + '</p>';
+    return;
+  }
+  container.innerHTML = items.map(it => `
+    <div class="pending-item" data-id="${escapeAttr(it.id)}">
+      <div class="ref-word">${escapeHtml(it.word)}</div>
+      <p class="ref-note">${escapeHtml(it.note)}</p>
+      <div class="pending-actions">
+        <button class="btn danger ref-delete-btn">${t('deleteBtn')}</button>
+      </div>
+    </div>
+  `).join('');
+  container.querySelectorAll('.ref-delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => deleteReferenceNote(btn.closest('.pending-item').dataset.id));
+  });
+}
+
+async function deleteReferenceNote(id){
+  if(!confirm(t('confirmDeleteRef'))) return;
+  // .select() renvoie les lignes réellement supprimées : vide = refusé par les règles Supabase.
+  const { data, error } = await sb.from('reference_notes').delete().eq('id', id).select();
+  if(error || !data || data.length === 0){
+    console.error('Suppression note de référence refusée:', error);
+    alert(t('errRefDelete') + (error ? ` [${error.message}]` : ''));
+    return;
+  }
+  await loadRefManage();
+  await loadReference();
+}
 
 /* ---------- Page Référence ---------- */
 async function loadReference(){
@@ -1402,12 +1575,17 @@ async function loadReference(){
 }
 
 /* ---------- Utilitaires ---------- */
-function speak(text, lang){
+function speak(parts, lang){
   if(!('speechSynthesis' in window)){ alert("Audio unavailable / Audio indisponible."); return; }
   window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text);
-  if(lang) utter.lang = guessLangCode(lang);
-  window.speechSynthesis.speak(utter);
+  const list = (Array.isArray(parts) ? parts : [parts]).filter(p => p && String(p).trim());
+  const code = guessLangCode(lang || '');
+  // Chaque morceau est lu à la suite : mot, définition, puis exemple.
+  list.forEach(text => {
+    const utter = new SpeechSynthesisUtterance(String(text));
+    utter.lang = code;
+    window.speechSynthesis.speak(utter);
+  });
 }
 function guessLangCode(lang){
   const l = lang.toLowerCase();
@@ -1452,6 +1630,7 @@ applyLanguage();
 loadApproved();
 loadReference();
 restoreAdminSession();
+loadPreface();
 registerVisit();
 
 if('serviceWorker' in navigator){
@@ -1459,7 +1638,7 @@ if('serviceWorker' in navigator){
     navigator.serviceWorker.register('./sw.js').catch((e) => console.warn('SW registration failed', e));
   });
 }
-window.addEventListener('online', loadApproved);
+window.addEventListener('online', () => { loadApproved(); loadPreface(); });
 </script>
 </body>
 </html>

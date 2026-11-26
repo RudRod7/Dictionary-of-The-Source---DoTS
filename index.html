@@ -139,6 +139,23 @@
   .meta-line strong{font-style:normal;color:var(--gold);font-family:'Space Mono',monospace;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;margin-right:6px;}
   .media-gallery{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
   .media-gallery img{width:84px;height:84px;object-fit:cover;border-radius:4px;border:1px solid var(--line);}
+  .media-group{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;}
+  .media-thumb{width:112px;height:112px;object-fit:cover;border-radius:4px;border:1px solid var(--line);cursor:zoom-in;background:var(--paper-2);}
+  .video-thumb{position:relative;width:112px;height:112px;border-radius:4px;border:1px solid var(--line);overflow:hidden;cursor:pointer;background:#000;}
+  .video-thumb video{width:100%;height:100%;object-fit:cover;pointer-events:none;display:block;}
+  .play-badge{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.62);color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.9rem;padding-left:3px;}
+  .media-tap-hint{margin-top:8px;font-family:'Space Mono',monospace;font-size:0.68rem;letter-spacing:0.03em;color:var(--ink-dim);}
+  .viewer{position:fixed;inset:0;z-index:1000;background:rgba(8,8,10,0.94);display:flex;align-items:center;justify-content:center;}
+  .viewer[hidden]{display:none;}
+  .viewer-stage{width:100%;height:100%;box-sizing:border-box;padding:64px 10px 48px;display:flex;align-items:center;justify-content:center;}
+  .viewer-stage img,.viewer-stage video{max-width:100%;max-height:100%;object-fit:contain;border-radius:4px;background:#000;}
+  .viewer button{background:rgba(255,255,255,0.16);color:#fff;border:none;border-radius:50%;width:46px;height:46px;font-size:1.3rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .viewer button:hover{background:rgba(255,255,255,0.3);}
+  .viewer-close{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);right:12px;z-index:2;}
+  .viewer-nav{position:absolute;top:50%;transform:translateY(-50%);z-index:2;font-size:1.8rem !important;}
+  .viewer-prev{left:8px;}
+  .viewer-next{right:8px;}
+  .viewer-counter{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);text-align:center;color:#eee;font-family:'Space Mono',monospace;font-size:0.75rem;letter-spacing:0.05em;pointer-events:none;}
   .media-videos{margin-top:14px;}
   .media-videos video{width:100%;max-width:420px;border-radius:4px;border:1px solid var(--line);display:block;}
   .uploader-credit{
@@ -220,7 +237,7 @@
       </div>
       <div class="field">
         <label data-i18n="labelDef">Définition</label>
-        <textarea id="defInput" rows="2" data-i18n-placeholder="phDef" placeholder="Ce que signifie ce mot..."></textarea>
+        <textarea id="defInput" rows="5" data-i18n-placeholder="phDef" placeholder="Ce que signifie ce mot..."></textarea>
       </div>
       <div class="field-row">
         <div class="field">
@@ -305,8 +322,8 @@
           <div class="field"><label>🇬🇧 <span data-i18n="labelWord">Mot</span></label><input type="text" id="aw-word-en"></div>
         </div>
         <div class="field-row">
-          <div class="field"><label>🇫🇷 <span data-i18n="labelDef">Définition</span></label><textarea id="aw-def-fr" rows="2"></textarea></div>
-          <div class="field"><label>🇬🇧 <span data-i18n="labelDef">Définition</span></label><textarea id="aw-def-en" rows="2"></textarea></div>
+          <div class="field"><label>🇫🇷 <span data-i18n="labelDef">Définition</span></label><textarea id="aw-def-fr" rows="5"></textarea></div>
+          <div class="field"><label>🇬🇧 <span data-i18n="labelDef">Définition</span></label><textarea id="aw-def-en" rows="5"></textarea></div>
         </div>
         <div class="field-row">
           <div class="field"><label>🇫🇷 <span data-i18n="labelExample">Exemple</span></label><input type="text" id="aw-ex-fr"></div>
@@ -385,6 +402,14 @@
 
   <div class="brand-bar">Propulsée par Nour Enterprises - OUVERT AU PUBLIQUE.</div>
 
+</div>
+
+<div id="mediaViewer" class="viewer" hidden>
+  <button type="button" class="viewer-close">✕</button>
+  <button type="button" class="viewer-nav viewer-prev">‹</button>
+  <div class="viewer-stage"></div>
+  <button type="button" class="viewer-nav viewer-next">›</button>
+  <div class="viewer-counter"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -483,6 +508,8 @@ const I18N = {
     visitsLabel: "visites depuis le lancement",
     paywallNotice: "L'accès au site sera rendu payant à partir du 4 janvier 2027.",
     backToList: "Retour à la liste",
+    closeLabel: "Fermer", prevLabel: "Précédent", nextLabel: "Suivant", playVideo: "Lire la vidéo",
+    mediaTapHint: "Touche un fichier pour l'agrandir.",
     prefaceEditTitle: "Modifier la préface",
     prefaceEditHint: "Le texte s'affiche tel que tu l'écris (paragraphes et retours à la ligne conservés). Laisse un champ vide pour revenir au texte d'origine.",
     prefaceSaveBtn: "Enregistrer la préface", prefaceResetBtn: "Restaurer le texte d'origine",
@@ -561,6 +588,8 @@ const I18N = {
     visitsLabel: "visits since launch",
     paywallNotice: "Access to the site will become paid starting January 4, 2027.",
     backToList: "Back to the list",
+    closeLabel: "Close", prevLabel: "Previous", nextLabel: "Next", playVideo: "Play video",
+    mediaTapHint: "Tap a file to enlarge it.",
     prefaceEditTitle: "Edit the preface",
     prefaceEditHint: "The text is displayed exactly as you write it (paragraphs and line breaks preserved). Leave a field empty to go back to the original text.",
     prefaceSaveBtn: "Save the preface", prefaceResetBtn: "Restore original text",
@@ -866,7 +895,15 @@ function updateSyncStatus(isOnline){
 
 function localizedField(e, base){
   const val = e[base + '_' + currentLang];
-  return (val && val.trim()) ? val : e[base];
+  const raw = e[base];
+  if(val && val.trim()){
+    // Si la version enregistrée a perdu ses retours à la ligne mais que le texte d'origine les a
+    // (et que c'est le même texte aux espaces près), on affiche l'original avec sa mise en forme.
+    const norm = (x) => String(x).replace(/\s+/g, ' ').trim();
+    if(raw && raw.includes('\n') && !val.includes('\n') && norm(raw) === norm(val)) return raw;
+    return val;
+  }
+  return raw;
 }
 
 let focusedWordId = null;
@@ -916,6 +953,120 @@ function mediaNoticeHtml(e){
   return `<div class="media-notice">📎 ${t('mediaAttached')} ${parts.join(', ')} — ${t('mediaClickHint')}${credit}</div>`;
 }
 
+/* Vignettes cliquables : un appui ouvre le visualiseur plein écran (voir plus bas). */
+function mediaGroupHtml(images, videos, label){
+  if(!images.length && !videos.length) return '';
+  const imgs = images.map(url =>
+    `<img class="media-thumb" src="${escapeAttr(url)}" alt="${escapeAttr(label || '')}" loading="lazy" data-media-url="${escapeAttr(url)}" data-media-type="image" tabindex="0" role="button">`
+  ).join('');
+  const vids = videos.map(url =>
+    `<div class="video-thumb" data-media-url="${escapeAttr(url)}" data-media-type="video" tabindex="0" role="button" aria-label="${escapeAttr(t('playVideo'))}"><video src="${escapeAttr(url)}#t=0.1" preload="metadata" muted playsinline></video><span class="play-badge">▶</span></div>`
+  ).join('');
+  return `<div class="media-group">${imgs}${vids}</div>`;
+}
+
+/* ---------- Visualiseur plein écran (images + vidéos) ---------- */
+const viewerEl = document.getElementById('mediaViewer');
+const viewerStage = viewerEl.querySelector('.viewer-stage');
+let viewerItems = [];
+let viewerIndex = 0;
+let viewerOpen = false;
+
+function showViewerItem(){
+  const item = viewerItems[viewerIndex];
+  viewerStage.innerHTML = '';
+  let el;
+  if(item.type === 'video'){
+    el = document.createElement('video');
+    el.controls = true;
+    el.autoplay = true;
+    el.playsInline = true;
+    el.src = item.url;
+  } else {
+    el = document.createElement('img');
+    el.src = item.url;
+    el.alt = '';
+  }
+  viewerStage.appendChild(el);
+  const multi = viewerItems.length > 1;
+  viewerEl.querySelector('.viewer-counter').textContent = multi ? `${viewerIndex + 1} / ${viewerItems.length}` : '';
+  viewerEl.querySelector('.viewer-prev').style.display = multi ? '' : 'none';
+  viewerEl.querySelector('.viewer-next').style.display = multi ? '' : 'none';
+}
+
+function openViewer(items, index){
+  viewerItems = items;
+  viewerIndex = Math.max(0, index);
+  viewerEl.querySelector('.viewer-close').setAttribute('aria-label', t('closeLabel'));
+  viewerEl.querySelector('.viewer-prev').setAttribute('aria-label', t('prevLabel'));
+  viewerEl.querySelector('.viewer-next').setAttribute('aria-label', t('nextLabel'));
+  viewerEl.hidden = false;
+  document.body.style.overflow = 'hidden';
+  showViewerItem();
+  // Le bouton « retour » du téléphone ferme le visualiseur au lieu de quitter la page.
+  if(!viewerOpen){ try{ history.pushState({ dotsViewer: true }, ''); }catch(e){} }
+  viewerOpen = true;
+}
+
+function closeViewer(fromPopState){
+  if(!viewerOpen) return;
+  viewerOpen = false;
+  viewerStage.innerHTML = '';   // vide la scène : arrête aussi la lecture d'une vidéo
+  viewerEl.hidden = true;
+  document.body.style.overflow = '';
+  if(!fromPopState && history.state && history.state.dotsViewer){ try{ history.back(); }catch(e){} }
+}
+
+function stepViewer(delta){
+  const n = viewerItems.length;
+  if(n < 2) return;
+  viewerIndex = (viewerIndex + delta + n) % n;
+  showViewerItem();
+}
+
+viewerEl.querySelector('.viewer-close').addEventListener('click', () => closeViewer());
+viewerEl.querySelector('.viewer-prev').addEventListener('click', (ev) => { ev.stopPropagation(); stepViewer(-1); });
+viewerEl.querySelector('.viewer-next').addEventListener('click', (ev) => { ev.stopPropagation(); stepViewer(1); });
+// Appui sur le fond noir = fermer
+viewerEl.addEventListener('click', (ev) => {
+  if(ev.target === viewerEl || ev.target === viewerStage) closeViewer();
+});
+window.addEventListener('popstate', () => closeViewer(true));
+document.addEventListener('keydown', (ev) => {
+  if(!viewerOpen) return;
+  if(ev.key === 'Escape') closeViewer();
+  else if(ev.key === 'ArrowLeft') stepViewer(-1);
+  else if(ev.key === 'ArrowRight') stepViewer(1);
+});
+// Balayage gauche/droite pour passer d'une image à l'autre
+let swipeStartX = null;
+viewerStage.addEventListener('touchstart', (ev) => {
+  swipeStartX = (ev.target.tagName === 'IMG' && ev.touches.length === 1) ? ev.touches[0].clientX : null;
+}, { passive: true });
+viewerStage.addEventListener('touchend', (ev) => {
+  if(swipeStartX === null) return;
+  const dx = ev.changedTouches[0].clientX - swipeStartX;
+  swipeStartX = null;
+  if(Math.abs(dx) > 50) stepViewer(dx < 0 ? 1 : -1);
+}, { passive: true });
+
+// Un appui sur n'importe quelle vignette (fiche d'un mot, aperçu admin) ouvre le visualiseur
+function openFromTrigger(trigger){
+  const group = trigger.closest('.media-group');
+  const nodes = group ? Array.from(group.querySelectorAll('[data-media-url]')) : [trigger];
+  openViewer(nodes.map(n => ({ url: n.dataset.mediaUrl, type: n.dataset.mediaType })), nodes.indexOf(trigger));
+}
+document.addEventListener('click', (ev) => {
+  const trigger = ev.target.closest && ev.target.closest('[data-media-url]');
+  if(trigger) openFromTrigger(trigger);
+});
+document.addEventListener('keydown', (ev) => {
+  if((ev.key === 'Enter' || ev.key === ' ') && ev.target.matches && ev.target.matches('[data-media-url]')){
+    ev.preventDefault();
+    openFromTrigger(ev.target);
+  }
+});
+
 function entryHtml(e, i){
   const word = localizedField(e, 'word');
   const definition = localizedField(e, 'definition');
@@ -925,15 +1076,11 @@ function entryHtml(e, i){
   const images = Array.isArray(e.image_urls) ? e.image_urls : [];
   const videos = Array.isArray(e.video_urls) ? e.video_urls : [];
   // Fiche d'un mot : médias complets. Liste principale : simple mention sous les exemples.
-  const imagesHtml = (isFocused && images.length) ? `
-    <div class="media-gallery">
-      ${images.map(url => `<img src="${escapeAttr(url)}" alt="${escapeAttr(word)}" loading="lazy">`).join('')}
-    </div>` : '';
-  const videosHtml = (isFocused && videos.length) ? `
-    <div class="media-videos">
-      ${videos.map(url => `<video controls preload="metadata" src="${escapeAttr(url)}"></video>`).join('')}
-      ${e.uploader_tag ? `<div class="uploader-credit">${t('uploadedBy')} <strong>${escapeHtml(e.uploader_tag)}</strong></div>` : ''}
-    </div>` : '';
+  const creditHtml = (isFocused && videos.length && e.uploader_tag)
+    ? `<div class="uploader-credit">${t('uploadedBy')} <strong>${escapeHtml(e.uploader_tag)}</strong></div>` : '';
+  const mediaHtml = isFocused
+    ? mediaGroupHtml(images, videos, word) + ((images.length || videos.length) ? `<div class="media-tap-hint">${t('mediaTapHint')}</div>` : '') + creditHtml
+    : '';
   const noticeHtml = isFocused ? '' : mediaNoticeHtml(e);
   return `
     <div class="entry" data-id="${escapeAttr(e.id)}">
@@ -947,8 +1094,7 @@ function entryHtml(e, i){
         ${example ? `<div class="meta-line"><strong>${t('exampleLabel')}</strong>${escapeHtml(example)}</div>` : ''}
         ${origin ? `<div class="meta-line"><strong>${t('originLabel')}</strong>${escapeHtml(origin)}</div>` : ''}
         ${noticeHtml}
-        ${imagesHtml}
-        ${videosHtml}
+        ${mediaHtml}
       </div>
     </div>
   `;
@@ -1123,8 +1269,7 @@ async function renderPending(){
       ${it.origin ? `<div class="meta-line"><strong>${t('originLabel')}</strong>${escapeHtml(it.origin)}</div>` : ''}
       ${it.lang ? `<div class="meta-line"><strong>${t('labelLang')}</strong>${escapeHtml(it.lang)}</div>` : ''}
       ${it.uploader_tag ? `<div class="meta-line"><strong>${t('uploadedBy')}</strong>${escapeHtml(it.uploader_tag)}</div>` : ''}
-      ${Array.isArray(it.image_urls) && it.image_urls.length ? `<div class="media-gallery">${it.image_urls.map(u => `<img src="${escapeAttr(u)}" alt="">`).join('')}</div>` : ''}
-      ${Array.isArray(it.video_urls) && it.video_urls.length ? `<div class="media-videos">${it.video_urls.map(u => `<video controls preload="metadata" src="${escapeAttr(u)}"></video>`).join('')}</div>` : ''}
+      ${mediaGroupHtml(Array.isArray(it.image_urls) ? it.image_urls : [], Array.isArray(it.video_urls) ? it.video_urls : [], it.word)}
       <div class="translate-editor" style="display:none;margin-top:14px;"></div>
       <div class="pending-actions">
         <button class="btn translate-btn">${t('translateBtn')}</button>
@@ -1195,11 +1340,11 @@ async function openTranslateEditor(itemEl, id, entry){
     <div class="field-row">
       <div class="field">
         <label>🇫🇷 ${t('labelDef')}</label>
-        <textarea class="ed-def-fr" rows="2">${escapeHtml(defFr)}</textarea>
+        <textarea class="ed-def-fr" rows="6">${escapeHtml(defFr)}</textarea>
       </div>
       <div class="field">
         <label>🇬🇧 ${t('labelDef')}</label>
-        <textarea class="ed-def-en" rows="2">${escapeHtml(defEn)}</textarea>
+        <textarea class="ed-def-en" rows="6">${escapeHtml(defEn)}</textarea>
       </div>
     </div>
     <div class="field-row">
@@ -1350,8 +1495,8 @@ function openManageEditor(itemEl, entry){
       <div class="field"><label>🇬🇧 ${t('labelWord')}</label><input type="text" class="ed-word-en" value="${escapeAttr(wordEn)}"></div>
     </div>
     <div class="field-row">
-      <div class="field"><label>🇫🇷 ${t('labelDef')}</label><textarea class="ed-def-fr" rows="2">${escapeHtml(defFr)}</textarea></div>
-      <div class="field"><label>🇬🇧 ${t('labelDef')}</label><textarea class="ed-def-en" rows="2">${escapeHtml(defEn)}</textarea></div>
+      <div class="field"><label>🇫🇷 ${t('labelDef')}</label><textarea class="ed-def-fr" rows="6">${escapeHtml(defFr)}</textarea></div>
+      <div class="field"><label>🇬🇧 ${t('labelDef')}</label><textarea class="ed-def-en" rows="6">${escapeHtml(defEn)}</textarea></div>
     </div>
     <div class="field-row">
       <div class="field"><label>🇫🇷 ${t('labelExample')}</label><input type="text" class="ed-ex-fr" value="${escapeAttr(exFr)}"></div>
